@@ -21,10 +21,13 @@ function _init()
 	for i = 1, npc_count do
 		create_npc(i, rnd(npc_colors), rnd(npc_names), 16 + rnd(80), 35 +4* i)
 	end
+
+	_upd = u_walking_around
 end
 
 function _update()
-	p_move()
+	print("is updating")
+	_upd()
 end
 
 
@@ -35,44 +38,84 @@ function _draw()
 end
 
 
+-->8
+-- states --
 
 
+function u_walking_around()
+	print("walking around update")
+	p_move()
+	npcs_move()
 
-
+	if btnp(❎) then
+		npcs[flr(rnd(npc_count))].is_unlocked = true
+		print("moving")
+	end
+end
 
 
 
 
 -->8
 -- movement functions --
-function _checkvalid(x,y,dx,dy)
-	new_x = (x + dx*grid)/8
-	new_y = (y + dy*grid)/8
- loc =	mget(flr(new_x),flr(new_y))
-	if loc == 62 then
-		return false
-	else
-		return true
-	end
+function on_iceberg(new_x, new_y, flag)
+	local tile_x = new_x / 8
+	local tile_y = new_y / 8
+  return fget(mget(tile_x,tile_y), flag)
 end
-
-
 
 function p_move()
-	if btn(⬅️) then
-		p.x += -1
+	if btn() != 0 then
+		new_x = p.x
+		new_y = p.y
+		if btn(⬅️) then
+			new_x = p.x - 1
+		end
+		if btn(➡️) then
+			new_x = p.x + 1
+		end
+		if btn(⬆️) then
+			new_y = p.y -1
+		end
+		if btn(⬇️) then
+			new_y = p.y + 1
+		end
+		if on_iceberg(new_x + 4, new_y + 4, 0) then
+			// only update p position if on iceberg
+			p.x = new_x
+			p.y = new_y
+		else 
+			print("not on iceberg")
+		end
+	else
+		print("no input")
 	end
-	if btn(➡️) then
-		p.x += 1
-	end
-	if btn(⬆️) then
-		p.y += -1
-	end
-	if btn(⬇️) then
-		p.y += 1
-	end
-
 end
+
+
+function npcs_move()
+	for i = 1, npc_count do
+		if npcs[i].is_unlocked then 
+			if npcs[i].x < npcs[i].target_x then 
+				npcs[i].x += npcs[i].dx
+			end	
+			if npcs[i].x > npcs[i].target_x then 
+				npcs[i].x -= npcs[i].dx
+			end	
+			if npcs[i].y < npcs[i].target_y then 
+				npcs[i].y += npcs[i].dy
+			end	
+			if npcs[i].y > npcs[i].target_y then 
+				npcs[i].y -= npcs[i].dy
+			end	
+		end
+	end
+end
+
+
+
+
+
 -->8
 -- drawing functions --
 
@@ -100,8 +143,11 @@ function create_npc(id,sprite,name,x,y)
 		name = name,
 		x = x,
 		y = y,
-		dx = 2,
-		dy = 2
+		dx = 1,
+		dy = 1,
+		target_x = 25, 
+		target_y = 50,
+		is_unlocked = false
 	}
 
 	add(npcs, npc)
@@ -140,6 +186,9 @@ __gfx__
 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000006666656611111111cccccccc77777777
 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000005656666611111111cccccccc77777777
 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000005555555511111111cccccccc77777777
+__gff__
+0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000010000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 __map__
 3d3d3d3d3d0d3d3d3d3d3d3d3d3d3d3d00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 3d0c0b3d3d3d3d3d3d0d3d3d3d3d3d3d00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
