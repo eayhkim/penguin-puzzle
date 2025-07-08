@@ -18,23 +18,23 @@ function _init()
 	npc_count = 10
 	npc_names = {"joe", "bob", "mary", "jane"}
 	npc_colors = {3, 4, 5, 6, 7,8,9,10}
+	npc_index = 1
 	for i = 1, npc_count do
 		create_npc(i, rnd(npc_colors), rnd(npc_names), 16 + rnd(80), 35 +4* i)
 	end
 
 	_upd = u_walking_around
+	_drw = d_walking_around
+	offset = 0
 end
 
 function _update()
-	print("is updating")
 	_upd()
 end
 
 
 function _draw()
-	cls()
-	map()
-	draw_penguins()
+	_drw()
 end
 
 
@@ -43,15 +43,44 @@ end
 
 
 function u_walking_around()
-	print("walking around update")
 	p_move()
 	npcs_move()
 
 	if btnp(❎) then
-		npcs[flr(rnd(npc_count))].is_unlocked = true
-		print("moving")
+		npcs[npc_index].is_unlocked = true
+		npc_index += 1
+		trigger_shake()
+		
 	end
 end
+
+
+function ready_to_shake()
+	for i = 1, npc_count do 
+		if not npcs[i].is_unlocked then 
+			return false 
+		end
+	end 
+	return true 
+end
+
+
+function trigger_shake()
+	if ready_to_shake() then 
+		offset = 1
+		_upd = u_flip_iceberg
+	end
+end
+
+
+function u_flip_iceberg()
+	screen_shake()
+end
+
+function u_end_game()
+	cls()
+end
+
 
 
 
@@ -115,9 +144,20 @@ end
 
 
 
-
 -->8
 -- drawing functions --
+
+function d_walking_around()
+	cls()
+	map()
+	draw_penguins()
+end
+
+function d_end_game()
+	cls()
+	print("you flipped the iceberg")
+end
+
 
 function draw_penguins()
 // layers sprite drawing based on y position
@@ -133,6 +173,28 @@ p_drawn = false
 		spr(p.sprite, p.x, p.y)
 	end
 end
+
+
+
+function screen_shake()
+	local grow = 1.05
+	local offset_x = 4 - rnd(8)
+	local offset_y = 4 - rnd(8)
+	
+	offset_x *= offset
+	offset_y *= offset
+	
+	camera(offset_x,offset_y)
+	
+	offset *= grow
+	
+	if offset >= 20 then
+		_upd = u_end_game
+		_drw = d_end_game
+	end
+end
+
+
 -->8
 -- init functions --
 
