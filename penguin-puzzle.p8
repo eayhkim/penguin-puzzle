@@ -151,7 +151,7 @@ function d_walking_around()
 	cls()
 	map()
 	draw_penguins()
-    draw_shark()
+    draw_sharks()
 end
 
 function d_end_game()
@@ -176,9 +176,12 @@ p_drawn = false
 end
 
 
-function draw_shark()
+function draw_sharks()
     // shark == sprite 17
     spr(17, 7, 100)
+
+    // flip sprite horizontally
+    spr(17, 118, 45, 1, 1, true, false)
 end
 
 
