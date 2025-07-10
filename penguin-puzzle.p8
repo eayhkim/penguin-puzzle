@@ -68,12 +68,12 @@ end
 function trigger_shake()
 	if ready_to_shake() then 
 		offset = 1
-		_upd = u_flip_iceberg
+		_upd = u_tip_iceberg
 	end
 end
 
 
-function u_flip_iceberg()
+function u_tip_iceberg()
 	screen_shake()
 end
 
@@ -155,7 +155,7 @@ end
 
 function d_end_game()
 	cls()
-	print("you flipped the iceberg")
+	print("you tipped the iceberg")
 end
 
 
