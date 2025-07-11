@@ -49,6 +49,9 @@ function _init()
 		}
 	}
 
+	statex = "walking"
+	closest = npcs[0]
+
 	_upd = u_walking_around
 	_drw = d_walking_around
 	offset = 0
@@ -73,6 +76,14 @@ function u_walking_around()
 	npcs_move()
 	sharks_move()
 
+	closest = get_nearest_npc()
+
+	if btnp(🅾️) then
+		statex = "talking"
+	else
+
+	end
+
 	if btnp(❎) then
 		npcs[npc_index].is_unlocked = true
 		npcs[npc_index].state = "move"
@@ -80,6 +91,10 @@ function u_walking_around()
 		trigger_shake()
 		
 	end
+end
+
+
+function u_dialogue()
 end
 
 
@@ -110,6 +125,17 @@ function u_end_game()
 end
 
 
+
+-->8
+-- helper / reusable functions --
+function dst(o1, o2)
+ 	return sqrt(sqr(o1.x - o2.x) + sqr(o1.y - o2.y))
+end
+
+
+function sqr(x) 
+	return x * x 
+end
 
 
 
@@ -152,6 +178,21 @@ function random_water_position()
     return new_x, new_y
 end
 
+
+function get_nearest_npc()
+	local min_dist = 32000
+
+	for i = 1, npc_count do 
+		curr_dist = dst(p, npcs[i])
+		min_dist = min(min_dist, curr_dist)
+
+		if min_dist == curr_dist do 
+			closest = npcs[i]
+		end
+	end
+
+	return closest
+end
 
 
 function p_move()
@@ -246,7 +287,13 @@ function d_walking_around()
 	map()
 	draw_penguins()
     draw_sharks()
+
+	if statex == "talking" then
+		draw_textbox(closest)
+		draw_big_penguin(closest)
+	end
 end
+
 
 function d_end_game()
 	cls()
@@ -279,6 +326,7 @@ function draw_sharks()
     end
 end
 
+
 function anim_peng(peng)
 	if peng.state == "still" then
 			spr(peng.spr_frames[1], peng.x, peng.y, 1,1,peng.face_right)
@@ -310,6 +358,28 @@ function screen_shake()
 		_upd = u_end_game
 		_drw = d_end_game
 	end
+end
+
+
+function draw_textbox(peng)
+	-- generate rectangle (0 == index of black color)
+	rectfill(60, 20, 120, 90, 0)
+	rectfill(62, 22, 118, 88, 7)
+	rectfill(66, 26, 114, 84, 6)
+
+	print(peng.name, 75, 35, 1)
+	print("")
+	print("says") 
+	print("hello!")
+	print(":D")
+end	
+
+
+function draw_big_penguin(peng)
+	-- identify sprite location in grid, then scale size
+	local sx = (peng.spr_frames[1] % 16) * 8
+	local sy = (peng.spr_frames[1] \ 16) * 8	
+	sspr(sx, sy, 8, 8, -10, 60, 96, 96, true, false)
 end
 
 
@@ -389,4 +459,6 @@ __map__
 3e3e3b0f2f3f3f1f3f3f3f2f2f0e3a3e00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 3e3e3e3b3c0f2f2f2f2f0e3c3c3a1e3e00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 3e3e2e3e2e3b3c3c3c3c3a3e1e3e3e3e00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
