@@ -83,6 +83,10 @@ function u_walking_around()
 end
 
 
+function u_dialogue()
+end
+
+
 function ready_to_shake()
 	for i = 1, npc_count do 
 		if not npcs[i].is_unlocked then 
@@ -246,7 +250,10 @@ function d_walking_around()
 	map()
 	draw_penguins()
     draw_sharks()
+	draw_textbox()
+	draw_big_penguin(p)
 end
+
 
 function d_end_game()
 	cls()
@@ -279,6 +286,7 @@ function draw_sharks()
     end
 end
 
+
 function anim_peng(peng)
 	if peng.state == "still" then
 			spr(peng.spr_frames[1], peng.x, peng.y, 1,1,peng.face_right)
@@ -310,6 +318,21 @@ function screen_shake()
 		_upd = u_end_game
 		_drw = d_end_game
 	end
+end
+
+
+function draw_textbox()
+	-- generate rectangle (0 == index of black color)
+	rectfill(60, 20, 120, 90, 0)
+	rectfill(65, 25, 115, 85, 1)
+	rectfill(70, 30, 110, 80, 12)
+end	
+
+
+function draw_big_penguin(p)
+	sx, sy = (p.sprite % 16) * 8, (p.sprite / 16) * 8	
+	sspr(sx, sy, 8, 8, -10, 60, 96, 96, true, false)
+
 end
 
 
