@@ -21,15 +21,26 @@ function _init()
 	npcs = {}
 	npc_count = 10
 	npc_names = {"joe", "bob", "mary", "jane"}
-	npc_colors = {3, 4, 5, 6, 7,8,9,10}
+	npc_colors = {3, 4, 5, 6, 7, 8, 9, 10}
 	npc_index = 1
 	for i = 1, npc_count do
-		create_npc(i, rnd(npc_colors), rnd(npc_names), 16 + rnd(80), 35 +4* i)
+		create_npc(i, rnd(npc_colors), rnd(npc_names), 16 + rnd(80), 35 + 4 * i)
 	end
 
+	-- give sharks starting target to swim to
 	sharks = {
-		{x=7, y=100, dx=0.5, dy=0.2, sprite=17, flip=true},
-		{x=118, y=45, dx=-0.5, dy=0.3, sprite=17, flip=false}
+		{
+			x = 7, y = 100, 
+			target_x = 7, target_y = 100, 
+			speed = 0.4, 
+			sprite = 17, flip = false
+		},
+		{
+			x = 118, y = 45, 
+			target_x = 118, target_y = 45, 
+			speed = 0.2, 
+			sprite = 17, flip = false
+		}
 	}
 
 	_upd = u_walking_around
@@ -104,11 +115,36 @@ function on_iceberg(new_x, new_y, flag)
 end
 
 
-function on_water(x, y)
-    local tile_x = flr(x / 8)
-    local tile_y = flr(y / 8)
-    return fget(mget(tile_x, tile_y), 1) -- flag 1 means water
+function shark_fully_in_water(x, y)
+	-- can adjust padding, but for now 0 seems best?
+	local padding = 0 
+
+    return on_water(x + padding, y + padding) and
+           on_water(x + 7 - padding, y + padding) and
+           on_water(x + padding, y + 7 - padding) and
+           on_water(x + 7 - padding, y + 7 - padding)
 end
+
+
+function on_water(new_x, new_y)
+	local tile_x = new_x / 8
+	local tile_y = new_y / 8
+
+	-- flag 1 means water (light blue pixels)
+    return fget(mget(tile_x, tile_y), 1) 
+end
+
+
+function random_water_position()
+	-- get new target for sharks 
+    local new_x, new_y
+    repeat
+        new_x = flr(rnd(128))
+        new_y = flr(rnd(128))
+    until on_water(new_x, new_y)
+    return new_x, new_y
+end
+
 
 
 function p_move()
@@ -162,21 +198,33 @@ end
 
 function sharks_move()
     for shark in all(sharks) do
-        local new_x = shark.x + shark.dx
-        local new_y = shark.y + shark.dy
+		-- get distance to target, swim there, then pick new one
+        local dx = shark.target_x - shark.x
+        local dy = shark.target_y - shark.y
+        local dist = sqrt(dx * dx + dy * dy)
 
-        if on_water(new_x, new_y) then
-            shark.x = new_x
-            shark.y = new_y
+        if dist < 1 then
+            shark.target_x, shark.target_y = random_water_position()
         else
-            -- reverse (flip sprite) if next spot not water
-            shark.dx = -shark.dx
-            shark.dy = -shark.dy
-            shark.flip = not shark.flip
+            local vx = (dx / dist) * shark.speed
+            local vy = (dy / dist) * shark.speed
+
+            local new_x = shark.x + vx
+            local new_y = shark.y + vy
+
+            -- check full shark sprite inside water
+            if shark_fully_in_water(new_x, new_y) then
+                shark.x = new_x
+                shark.y = new_y
+
+                -- flip sprite if changing direction
+                shark.flip = vx > 0
+            else
+                shark.target_x, shark.target_y = random_water_position()
+            end
         end
     end
 end
-
 
 
 -->8
