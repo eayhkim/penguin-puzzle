@@ -1,6 +1,19 @@
 pico-8 cartridge // http://www.pico-8.com
 version 42
 __lua__
+-- >>> init.lua <<<
+-->8
+-- init / setup --
+
+function _update()
+	_upd()
+end
+
+
+function _draw()
+	_drw()
+end
+
 
 function _init()
 	-- setting map transparency
@@ -9,7 +22,6 @@ function _init()
 
 	-- set flags on sprites 
 	fset(62, 1, true) -- 62 (light blue water)
-
 
 	p = {
 		x = 50,
@@ -29,6 +41,7 @@ function _init()
 	npc_names = {"joe", "bob", "mary", "jane"}
 	npc_colors = {3, 4, 5, 6, 7, 8, 9, 10}
 	npc_index = 1
+
 	for i = 1, npc_count do
 		create_npc(i, rnd(npc_colors), rnd(npc_names), 16 + rnd(80), 35 + 4 * i)
 	end
@@ -57,19 +70,34 @@ function _init()
 	offset = 0
 end
 
-function _update()
-	_upd()
+
+function create_npc(id,sprite,name,x,y)
+	local npc = {
+		id = id,
+		sprite = sprite,
+		spr_frames = {sprite, sprite + 16},
+		anim_timer = 0,
+		anim_speed = 8,
+		anim_index = 0,
+		face_right = false,
+		state = "still",
+		name = name,
+		x = x,
+		y = y,
+		dx = 1,
+		dy = 1,
+		target_x = 25, 
+		target_y = 50,
+		is_unlocked = false
+	}
+
+	add(npcs, npc)
 end
 
 
-function _draw()
-	_drw()
-end
-
-
+-- >>> update.lua <<<
 -->8
--- states --
-
+-- update / states --
 
 function u_walking_around()
 	p_move()
@@ -89,7 +117,6 @@ function u_walking_around()
 		npcs[npc_index].state = "move"
 		npc_index += 1
 		trigger_shake()
-		
 	end
 end
 
@@ -120,27 +147,121 @@ function u_tip_iceberg()
 	screen_shake()
 end
 
+
 function u_end_game()
 	cls()
 end
 
 
-
+-- >>> drawing.lua <<<
 -->8
--- helper / reusable functions --
-function dst(o1, o2)
- 	return sqrt(sqr(o1.x - o2.x) + sqr(o1.y - o2.y))
+-- drawing --
+
+function d_walking_around()
+	cls()
+	map()
+	draw_penguins()
+    draw_sharks()
+
+	if statex == "talking" then
+		draw_textbox(closest)
+		draw_big_penguin(closest)
+	end
 end
 
 
-function sqr(x) 
-	return x * x 
+function d_end_game()
+	cls()
+	print("you tipped the iceberg!", 30,30, 7)
 end
 
 
+function draw_penguins()
+-- layers sprite drawing based on y position
+p_drawn = false
+	for i = 1, npc_count do
+		if npcs[i].y > p.y and not p_drawn then
+				//spr(p.sprite, p.x, p.y)
+				anim_peng(p)
+				p_drawn = true
+		end
+		//spr(npcs[i].sprite, npcs[i].x, npcs[i].y)
+		anim_peng(npcs[i])
+	end
+	if not p_drawn then
+		//spr(p.sprite, p.x, p.y)
+		anim_peng(p)
+	end
+end
 
+
+function draw_sharks()
+    for shark in all(sharks) do
+        spr(shark.sprite, shark.x, shark.y, 1, 1, shark.flip, false)
+    end
+end
+
+
+function anim_peng(peng)
+	if peng.state == "still" then
+			spr(peng.spr_frames[1], peng.x, peng.y, 1,1,peng.face_right)
+	else
+		peng.anim_timer += 1
+		if peng.anim_timer >= peng.anim_speed then
+			peng.anim_index = (peng.anim_index + 1) % 2
+			peng.anim_timer = 0
+		end
+		
+		spr(peng.spr_frames[peng.anim_index+1], peng.x, peng.y, 1,1,peng.face_right)
+	end
+end
+
+
+function screen_shake()
+	local grow = 1.05
+	local offset_x = 4 - rnd(8)
+	local offset_y = 4 - rnd(8)
+	
+	offset_x *= offset
+	offset_y *= offset
+	
+	camera(offset_x,offset_y)
+	
+	offset *= grow
+	
+	if offset >= 20 then
+		_upd = u_end_game
+		_drw = d_end_game
+	end
+end
+
+
+function draw_textbox(peng)
+	-- generate rectangle (0 == index of black color)
+	rectfill(60, 20, 120, 90, 0)
+	rectfill(62, 22, 118, 88, 7)
+	rectfill(66, 26, 114, 84, 6)
+
+	print(peng.name, 75, 35, 1)
+	print("")
+	print("says") 
+	print("hello!")
+	print(":D")
+end	
+
+
+function draw_big_penguin(peng)
+	-- identify sprite location in grid, then scale size
+	local sx = (peng.spr_frames[1] % 16) * 8
+	local sy = (peng.spr_frames[1] \ 16) * 8	
+	sspr(sx, sy, 8, 8, -10, 60, 96, 96, true, false)
+end
+
+
+-- >>> movement.lua <<<
 -->8
--- movement functions --
+-- movement --
+
 function on_sprite_zone(new_x, new_y, flag)
 	-- reusable helper to check if coords on iceberg, on water, etc
 	local tile_x = new_x / 8
@@ -271,135 +392,19 @@ function sharks_move()
 end
 
 
+-- >>> utils.lua <<<
 -->8
--- drawing functions --
+-- utils / helpers --
 
-function d_walking_around()
-	cls()
-	map()
-	draw_penguins()
-    draw_sharks()
-
-	if statex == "talking" then
-		draw_textbox(closest)
-		draw_big_penguin(closest)
-	end
+function dst(o1, o2)
+ 	return sqrt(sqr(o1.x - o2.x) + sqr(o1.y - o2.y))
 end
 
 
-function d_end_game()
-	cls()
-	print("you tipped the iceberg!", 30,30, 7)
+function sqr(x) 
+	return x * x 
 end
 
-
-function draw_penguins()
--- layers sprite drawing based on y position
-p_drawn = false
-	for i = 1, npc_count do
-		if npcs[i].y > p.y and not p_drawn then
-				//spr(p.sprite, p.x, p.y)
-				anim_peng(p)
-				p_drawn = true
-		end
-		//spr(npcs[i].sprite, npcs[i].x, npcs[i].y)
-		anim_peng(npcs[i])
-	end
-	if not p_drawn then
-		//spr(p.sprite, p.x, p.y)
-		anim_peng(p)
-	end
-end
-
-
-function draw_sharks()
-    for shark in all(sharks) do
-        spr(shark.sprite, shark.x, shark.y, 1, 1, shark.flip, false)
-    end
-end
-
-
-function anim_peng(peng)
-	if peng.state == "still" then
-			spr(peng.spr_frames[1], peng.x, peng.y, 1,1,peng.face_right)
-	else
-		peng.anim_timer += 1
-		if peng.anim_timer >= peng.anim_speed then
-			peng.anim_index = (peng.anim_index + 1) % 2
-			peng.anim_timer = 0
-		end
-		
-		spr(peng.spr_frames[peng.anim_index+1], peng.x, peng.y, 1,1,peng.face_right)
-	end
-end
-
-
-function screen_shake()
-	local grow = 1.05
-	local offset_x = 4 - rnd(8)
-	local offset_y = 4 - rnd(8)
-	
-	offset_x *= offset
-	offset_y *= offset
-	
-	camera(offset_x,offset_y)
-	
-	offset *= grow
-	
-	if offset >= 20 then
-		_upd = u_end_game
-		_drw = d_end_game
-	end
-end
-
-
-function draw_textbox(peng)
-	-- generate rectangle (0 == index of black color)
-	rectfill(60, 20, 120, 90, 0)
-	rectfill(62, 22, 118, 88, 7)
-	rectfill(66, 26, 114, 84, 6)
-
-	print(peng.name, 75, 35, 1)
-	print("")
-	print("says") 
-	print("hello!")
-	print(":D")
-end	
-
-
-function draw_big_penguin(peng)
-	-- identify sprite location in grid, then scale size
-	local sx = (peng.spr_frames[1] % 16) * 8
-	local sy = (peng.spr_frames[1] \ 16) * 8	
-	sspr(sx, sy, 8, 8, -10, 60, 96, 96, true, false)
-end
-
-
--->8
--- init functions --
-
-function create_npc(id,sprite,name,x,y)
-	local npc = {
-		id = id,
-		sprite = sprite,
-		spr_frames = {sprite, sprite + 16},
-		anim_timer = 0,
-		anim_speed = 8,
-		anim_index = 0,
-		face_right = false,
-		state = "still",
-		name = name,
-		x = x,
-		y = y,
-		dx = 1,
-		dy = 1,
-		target_x = 25, 
-		target_y = 50,
-		is_unlocked = false
-	}
-
-	add(npcs, npc)
-end
 
 __gfx__
 00000000ffddddfffffddddfffeeeeffff3333ffffbbbbffff1111ffffccccffffaaaaffff5555ffff4444ff6611111111116666111111117777777667777777
