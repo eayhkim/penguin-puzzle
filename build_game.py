@@ -1,12 +1,38 @@
-INCLUDE_FILES = [
-    "init.lua", 
-    "update.lua", 
-    "drawing.lua", 
-    "movement.lua", 
-    "utils.lua"
-]
+###############################################################################
+##  `build_game.py`                                                          ##
+##                                                                           ##
+##  Creator: Adrien Lynch (GitHub: aadriien)                                 ##
+##  Purpose: Assembles multiple .lua files (code) into single pico-8 file    ##
+##  Notes: Preserves graphics and map data by only editing code section      ##
+###############################################################################
 
-P8_FILE = "penguin-puzzle.p8" 
+
+import os
+
+
+def find_files() -> tuple[str, list[str]]:
+    # Automatically find all .lua files in current folder, sorted alphabetically
+    lua_files = sorted([
+        f for f in os.listdir(".") 
+        if f.endswith(".lua")
+    ])
+
+    # Automatically find the .p8 file (assuming there's only one)
+    p8_files = [f for f in os.listdir(".") if f.endswith(".p8")]
+
+    if not p8_files:
+        raise Exception("No .p8 file found in current directory.")
+    elif len(p8_files) > 1:
+        raise Exception("Multiple .p8 files found. Please specify one explicitly.")
+    else:
+        p8_file = p8_files[0]
+
+    print(f"Found .p8 file: {p8_file}")
+    print("Found .lua files:")
+    for lua in lua_files:
+        print(f"   - {lua}")
+
+    return p8_file, lua_files
 
 
 def read_and_parse(p8_file: str) -> tuple[str, str]:
@@ -78,11 +104,12 @@ def write_assembled_code(p8_file: str, include_files: list[str],
 
 
 if __name__ == "__main__":
-    header, trailing_sections = read_and_parse(p8_file=P8_FILE)
+    p8_file, lua_files = find_files()
+    header, trailing_sections = read_and_parse(p8_file=p8_file)
 
     write_assembled_code(
-        p8_file=P8_FILE, 
-        include_files=INCLUDE_FILES, 
+        p8_file=p8_file, 
+        include_files=lua_files, 
         header=header, 
         trailing_sections=trailing_sections
     )
