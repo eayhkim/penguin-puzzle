@@ -7,8 +7,8 @@ function _init()
 	palt(0, false)
 	palt(15, true)
 
-	-- set flag 1 on sprite 62 (light blue water)
-	fset(62, 1, true)  
+	-- set flags on sprites 
+	fset(62, 1, true) -- 62 (light blue water)
 
 
 	p = {
@@ -141,10 +141,11 @@ end
 
 -->8
 -- movement functions --
-function on_iceberg(new_x, new_y, flag)
+function on_sprite_zone(new_x, new_y, flag)
+	-- reusable helper to check if coords on iceberg, on water, etc
 	local tile_x = new_x / 8
 	local tile_y = new_y / 8
-  return fget(mget(tile_x,tile_y), flag)
+  	return fget(mget(tile_x,tile_y), flag)
 end
 
 
@@ -152,19 +153,10 @@ function shark_fully_in_water(x, y)
 	-- can adjust padding, but for now 0 seems best?
 	local padding = 0 
 
-    return on_water(x + padding, y + padding) and
-           on_water(x + 7 - padding, y + padding) and
-           on_water(x + padding, y + 7 - padding) and
-           on_water(x + 7 - padding, y + 7 - padding)
-end
-
-
-function on_water(new_x, new_y)
-	local tile_x = new_x / 8
-	local tile_y = new_y / 8
-
-	-- flag 1 means water (light blue pixels)
-    return fget(mget(tile_x, tile_y), 1) 
+    return on_sprite_zone(x + padding, y + padding, 1) and
+           on_sprite_zone(x + 7 - padding, y + padding, 1) and
+           on_sprite_zone(x + padding, y + 7 - padding, 1) and
+           on_sprite_zone(x + 7 - padding, y + 7 - padding, 1)
 end
 
 
@@ -174,7 +166,7 @@ function random_water_position()
     repeat
         new_x = flr(rnd(128))
         new_y = flr(rnd(128))
-    until on_water(new_x, new_y)
+    until on_sprite_zone(new_x, new_y, 1)
     return new_x, new_y
 end
 
@@ -214,7 +206,7 @@ function p_move()
 		if btn(⬇️) then
 			new_y = p.y + 1
 		end
-		if on_iceberg(new_x + 4, new_y + 4, 0) then
+		if on_sprite_zone(new_x + 4, new_y + 4, 0) then
 			-- only update p position if on iceberg
 			p.x = new_x
 			p.y = new_y
