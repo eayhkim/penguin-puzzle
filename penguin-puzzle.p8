@@ -389,6 +389,20 @@ end
 
 
 function draw_textbox(peng)
+	-- dithering background
+	fillp(▒)
+	rectfill(0, 128, 128, 108, 6)
+	
+	fillp(░)
+	rectfill(0,108, 128, 88,6)
+	
+	fillp(☉)
+	rectfill(0,88, 128, 68,6)
+	
+	fillp(…)
+	rectfill(0,68, 128, 48,6)
+
+	fillp(⬅️)
 	-- generate rectangle (0 == index of black color)
 	rectfill(60, 20, 120, 90, 0)
 	rectfill(62, 22, 118, 88, 7)
