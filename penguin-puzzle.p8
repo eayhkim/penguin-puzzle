@@ -1,286 +1,9 @@
 pico-8 cartridge // http://www.pico-8.com
 version 42
 __lua__
-
-function _init()
-	-- setting map transparency
-	palt(0, false)
-	palt(15, true)
-
-	-- set flag 1 on sprite 62 (light blue water)
-	fset(62, 1, true)  
-
-
-	p = {
-		x = 50,
-		y = 50, 
-		sprite = 1,
-		spr_frames = {1, 2},
-		anim_index = 0,
-		anim_timer = 0,
-		anim_speed = 8,
-		state = "still",
-		face_right = false,
-		speed = 2
-	}
-
-	npcs = {}
-	npc_count = 10
-	npc_names = {"joe", "bob", "mary", "jane"}
-	npc_colors = {3, 4, 5, 6, 7, 8, 9, 10}
-	npc_index = 1
-	for i = 1, npc_count do
-		create_npc(i, rnd(npc_colors), rnd(npc_names), 16 + rnd(80), 35 + 4 * i)
-	end
-
-	-- give sharks starting target to swim to
-	sharks = {
-		{
-			x = 7, y = 100, 
-			target_x = 7, target_y = 100, 
-			speed = 0.4, 
-			sprite = 17, flip = false
-		},
-		{
-			x = 118, y = 45, 
-			target_x = 118, target_y = 45, 
-			speed = 0.2, 
-			sprite = 17, flip = false
-		}
-	}
-
-	statex = "walking"
-	closest = npcs[0]
-
-	_upd = u_walking_around
-	_drw = d_walking_around
-	offset = 0
-end
-
-function _update()
-	_upd()
-end
-
-
-function _draw()
-	_drw()
-end
-
-
+-- >>> drawing.lua <<<
 -->8
--- states --
-
-
-function u_walking_around()
-	p_move()
-	npcs_move()
-	sharks_move()
-
-	closest = get_nearest_npc()
-
-	if btnp(🅾️) then
-		statex = "talking"
-	else
-
-	end
-
-	if btnp(❎) then
-		npcs[npc_index].is_unlocked = true
-		npcs[npc_index].state = "move"
-		npc_index += 1
-		trigger_shake()
-		
-	end
-end
-
-
-function u_dialogue()
-end
-
-
-function ready_to_shake()
-	for i = 1, npc_count do 
-		if not npcs[i].is_unlocked then 
-			return false 
-		end
-	end 
-	return true 
-end
-
-
-function trigger_shake()
-	if ready_to_shake() then 
-		offset = 1
-		_upd = u_tip_iceberg
-	end
-end
-
-
-function u_tip_iceberg()
-	screen_shake()
-end
-
-function u_end_game()
-	cls()
-end
-
-
-
--->8
--- helper / reusable functions --
-function dst(o1, o2)
- 	return sqrt(sqr(o1.x - o2.x) + sqr(o1.y - o2.y))
-end
-
-
-function sqr(x) 
-	return x * x 
-end
-
-
-
--->8
--- movement functions --
-function on_iceberg(new_x, new_y, flag)
-	local tile_x = new_x / 8
-	local tile_y = new_y / 8
-  return fget(mget(tile_x,tile_y), flag)
-end
-
-
-function shark_fully_in_water(x, y)
-	-- can adjust padding, but for now 0 seems best?
-	local padding = 0 
-
-    return on_water(x + padding, y + padding) and
-           on_water(x + 7 - padding, y + padding) and
-           on_water(x + padding, y + 7 - padding) and
-           on_water(x + 7 - padding, y + 7 - padding)
-end
-
-
-function on_water(new_x, new_y)
-	local tile_x = new_x / 8
-	local tile_y = new_y / 8
-
-	-- flag 1 means water (light blue pixels)
-    return fget(mget(tile_x, tile_y), 1) 
-end
-
-
-function random_water_position()
-	-- get new target for sharks 
-    local new_x, new_y
-    repeat
-        new_x = flr(rnd(128))
-        new_y = flr(rnd(128))
-    until on_water(new_x, new_y)
-    return new_x, new_y
-end
-
-
-function get_nearest_npc()
-	local min_dist = 32000
-
-	for i = 1, npc_count do 
-		curr_dist = dst(p, npcs[i])
-		min_dist = min(min_dist, curr_dist)
-
-		if min_dist == curr_dist do 
-			closest = npcs[i]
-		end
-	end
-
-	return closest
-end
-
-
-function p_move()
-	if btn() != 0 then
-		p.state = "move"
-		new_x = p.x
-		new_y = p.y
-		if btn(⬅️) then
-			new_x = p.x - 1
-			p.face_right = false
-		end
-		if btn(➡️) then
-			new_x = p.x + 1
-			p.face_right = true
-		end
-		if btn(⬆️) then
-			new_y = p.y -1
-		end
-		if btn(⬇️) then
-			new_y = p.y + 1
-		end
-		if on_iceberg(new_x + 4, new_y + 4, 0) then
-			-- only update p position if on iceberg
-			p.x = new_x
-			p.y = new_y
-		else 
-			print("not on iceberg")
-		end
-	else
-		p.state = "still"
-		print("no input")
-	end
-end
-
-
-function npcs_move()
-	for i = 1, npc_count do
-		if npcs[i].is_unlocked then 
-			if npcs[i].x < npcs[i].target_x then 
-				npcs[i].x += npcs[i].dx
-			end	
-			if npcs[i].x > npcs[i].target_x then 
-				npcs[i].x -= npcs[i].dx
-			end	
-			if npcs[i].y < npcs[i].target_y then 
-				npcs[i].y += npcs[i].dy
-			end	
-			if npcs[i].y > npcs[i].target_y then 
-				npcs[i].y -= npcs[i].dy
-			end	
-		end
-	end
-end
-
-
-function sharks_move()
-    for shark in all(sharks) do
-		-- get distance to target, swim there, then pick new one
-        local dx = shark.target_x - shark.x
-        local dy = shark.target_y - shark.y
-        local dist = sqrt(dx * dx + dy * dy)
-
-        if dist < 1 then
-            shark.target_x, shark.target_y = random_water_position()
-        else
-            local vx = (dx / dist) * shark.speed
-            local vy = (dy / dist) * shark.speed
-
-            local new_x = shark.x + vx
-            local new_y = shark.y + vy
-
-            -- check full shark sprite inside water
-            if shark_fully_in_water(new_x, new_y) then
-                shark.x = new_x
-                shark.y = new_y
-
-                -- flip sprite if changing direction
-                shark.flip = vx > 0
-            else
-                shark.target_x, shark.target_y = random_water_position()
-            end
-        end
-    end
-end
-
-
--->8
--- drawing functions --
+-- drawing --
 
 function d_walking_around()
 	cls()
@@ -383,8 +106,75 @@ function draw_big_penguin(peng)
 end
 
 
+-- >>> init.lua <<<
 -->8
--- init functions --
+-- init / setup --
+
+function _update()
+	_upd()
+end
+
+
+function _draw()
+	_drw()
+end
+
+
+function _init()
+	-- setting map transparency
+	palt(0, false)
+	palt(15, true)
+
+	-- set flags on sprites 
+	fset(62, 1, true) -- 62 (light blue water)
+
+	p = {
+		x = 50,
+		y = 50, 
+		sprite = 1,
+		spr_frames = {1, 2},
+		anim_index = 0,
+		anim_timer = 0,
+		anim_speed = 8,
+		state = "still",
+		face_right = false,
+		speed = 2
+	}
+
+	npcs = {}
+	npc_count = 10
+	npc_names = {"joe", "bob", "mary", "jane"}
+	npc_colors = {3, 4, 5, 6, 7, 8, 9, 10}
+	npc_index = 1
+
+	for i = 1, npc_count do
+		create_npc(i, rnd(npc_colors), rnd(npc_names), 16 + rnd(80), 35 + 4 * i)
+	end
+
+	-- give sharks starting target to swim to
+	sharks = {
+		{
+			x = 7, y = 100, 
+			target_x = 7, target_y = 100, 
+			speed = 0.4, 
+			sprite = 17, flip = false
+		},
+		{
+			x = 118, y = 45, 
+			target_x = 118, target_y = 45, 
+			speed = 0.2, 
+			sprite = 17, flip = false
+		}
+	}
+
+	statex = "walking"
+	closest = npcs[0]
+
+	_upd = u_walking_around
+	_drw = d_walking_around
+	offset = 0
+end
+
 
 function create_npc(id,sprite,name,x,y)
 	local npc = {
@@ -408,6 +198,213 @@ function create_npc(id,sprite,name,x,y)
 
 	add(npcs, npc)
 end
+
+
+-- >>> movement.lua <<<
+-->8
+-- movement --
+
+function on_sprite_zone(new_x, new_y, flag)
+	-- reusable helper to check if coords on iceberg, on water, etc
+	local tile_x = new_x / 8
+	local tile_y = new_y / 8
+  	return fget(mget(tile_x,tile_y), flag)
+end
+
+
+function shark_fully_in_water(x, y)
+	-- can adjust padding, but for now 0 seems best?
+	local padding = 0 
+
+    return on_sprite_zone(x + padding, y + padding, 1) and
+           on_sprite_zone(x + 7 - padding, y + padding, 1) and
+           on_sprite_zone(x + padding, y + 7 - padding, 1) and
+           on_sprite_zone(x + 7 - padding, y + 7 - padding, 1)
+end
+
+
+function random_water_position()
+	-- get new target for sharks 
+    local new_x, new_y
+    repeat
+        new_x = flr(rnd(128))
+        new_y = flr(rnd(128))
+    until on_sprite_zone(new_x, new_y, 1)
+    return new_x, new_y
+end
+
+
+function get_nearest_npc()
+	local min_dist = 32000
+
+	for i = 1, npc_count do 
+		curr_dist = dst(p, npcs[i])
+		min_dist = min(min_dist, curr_dist)
+
+		if min_dist == curr_dist do 
+			closest = npcs[i]
+		end
+	end
+
+	return closest
+end
+
+
+function p_move()
+	if btn() != 0 then
+		p.state = "move"
+		new_x = p.x
+		new_y = p.y
+		if btn(⬅️) then
+			new_x = p.x - 1
+			p.face_right = false
+		end
+		if btn(➡️) then
+			new_x = p.x + 1
+			p.face_right = true
+		end
+		if btn(⬆️) then
+			new_y = p.y -1
+		end
+		if btn(⬇️) then
+			new_y = p.y + 1
+		end
+		if on_sprite_zone(new_x + 4, new_y + 4, 0) then
+			-- only update p position if on iceberg
+			p.x = new_x
+			p.y = new_y
+		else 
+			print("not on iceberg")
+		end
+	else
+		p.state = "still"
+		print("no input")
+	end
+end
+
+
+function npcs_move()
+	for i = 1, npc_count do
+		if npcs[i].is_unlocked then 
+			if npcs[i].x < npcs[i].target_x then 
+				npcs[i].x += npcs[i].dx
+			end	
+			if npcs[i].x > npcs[i].target_x then 
+				npcs[i].x -= npcs[i].dx
+			end	
+			if npcs[i].y < npcs[i].target_y then 
+				npcs[i].y += npcs[i].dy
+			end	
+			if npcs[i].y > npcs[i].target_y then 
+				npcs[i].y -= npcs[i].dy
+			end	
+		end
+	end
+end
+
+
+function sharks_move()
+    for shark in all(sharks) do
+		-- get distance to target, swim there, then pick new one
+        local dx = shark.target_x - shark.x
+        local dy = shark.target_y - shark.y
+        local dist = sqrt(dx * dx + dy * dy)
+
+        if dist < 1 then
+            shark.target_x, shark.target_y = random_water_position()
+        else
+            local vx = (dx / dist) * shark.speed
+            local vy = (dy / dist) * shark.speed
+
+            local new_x = shark.x + vx
+            local new_y = shark.y + vy
+
+            -- check full shark sprite inside water
+            if shark_fully_in_water(new_x, new_y) then
+                shark.x = new_x
+                shark.y = new_y
+
+                -- flip sprite if changing direction
+                shark.flip = vx > 0
+            else
+                shark.target_x, shark.target_y = random_water_position()
+            end
+        end
+    end
+end
+
+
+-- >>> update.lua <<<
+-->8
+-- update / states --
+
+function u_walking_around()
+	p_move()
+	npcs_move()
+	sharks_move()
+
+	closest = get_nearest_npc()
+
+	if btnp(🅾️) then
+		statex = "talking"
+	else
+
+	end
+
+	if btnp(❎) then
+		npcs[npc_index].is_unlocked = true
+		npcs[npc_index].state = "move"
+		npc_index += 1
+		trigger_shake()
+	end
+end
+
+
+function u_dialogue()
+end
+
+
+function ready_to_shake()
+	for i = 1, npc_count do 
+		if not npcs[i].is_unlocked then 
+			return false 
+		end
+	end 
+	return true 
+end
+
+
+function trigger_shake()
+	if ready_to_shake() then 
+		offset = 1
+		_upd = u_tip_iceberg
+	end
+end
+
+
+function u_tip_iceberg()
+	screen_shake()
+end
+
+
+function u_end_game()
+	cls()
+end
+
+
+-- >>> utils.lua <<<
+-->8
+-- utils / helpers --
+
+function dst(o1, o2)
+ 	return sqrt(sqr(o1.x - o2.x) + sqr(o1.y - o2.y))
+end
+
+
+function sqr(x) 
+	return x * x 
+end
+
 
 __gfx__
 00000000ffddddfffffddddfffeeeeffff3333ffffbbbbffff1111ffffccccffffaaaaffff5555ffff4444ff6611111111116666111111117777777667777777
