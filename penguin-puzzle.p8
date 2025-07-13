@@ -1,8 +1,8 @@
 pico-8 cartridge // http://www.pico-8.com
 version 42
 __lua__
--- >>> drawing.lua <<<
 -->8
+-- >>> drawing.lua <<<
 -- drawing --
 
 function d_walking_around()
@@ -106,8 +106,8 @@ function draw_big_penguin(peng)
 end
 
 
--- >>> init.lua <<<
 -->8
+-- >>> init.lua <<<
 -- init / setup --
 
 function _update()
@@ -200,8 +200,8 @@ function create_npc(id,sprite,name,x,y)
 end
 
 
--- >>> movement.lua <<<
 -->8
+-- >>> movement.lua <<<
 -- movement --
 
 function on_sprite_zone(new_x, new_y, flag)
@@ -334,8 +334,8 @@ function sharks_move()
 end
 
 
--- >>> update.lua <<<
 -->8
+-- >>> update.lua <<<
 -- update / states --
 
 function u_walking_around()
@@ -392,8 +392,8 @@ function u_end_game()
 end
 
 
--- >>> utils.lua <<<
 -->8
+-- >>> utils.lua <<<
 -- utils / helpers --
 
 function dst(o1, o2)
