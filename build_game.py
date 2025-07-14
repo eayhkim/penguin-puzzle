@@ -2,12 +2,14 @@
 ##  `build_game.py`                                                          ##
 ##                                                                           ##
 ##  Creator: Adrien Lynch (GitHub: aadriien)                                 ##
-##  Purpose: Assembles multiple .lua files (code) into single pico-8 file    ##
+##  Purpose: Assembles multiple .lua files into single .p8 file (PICO-8)     ##
 ##  Notes: Preserves graphics and map data by only editing code section      ##
 ###############################################################################
 
 
 import os
+import re
+from typing import Optional
 
 
 def find_files() -> tuple[str, list[str]]:
@@ -36,8 +38,8 @@ def find_files() -> tuple[str, list[str]]:
 
 
 def read_and_parse(p8_file: str) -> tuple[str, str]:
-    # Read entire content of p8 file (ensures preservation of sprites, map, etc)
-    with open(p8_file, "r") as f:
+    # Read entire contents of p8 file (ensures preservation of sprites, map, etc)
+    with open(p8_file, "r", encoding="utf-8") as f:
         content = f.read()
 
     # Split content at __lua__ (updating only code on reassemble)
@@ -49,9 +51,17 @@ def read_and_parse(p8_file: str) -> tuple[str, str]:
     header = parts[0] # content before __lua__
     rest = parts[1] # content after __lua__
 
-    # Find where next section after __lua__ starts (gfx, gff, map, or end)
-    section_headers = ["__gfx__", "__gff__", "__map__"]
+    section_headers = [
+        "__gfx__",
+        "__gff__",
+        "__map__",
+        "__sfx__",
+        "__music__",
+        "__label__",
+        "__cartdata__"
+    ]
 
+    # Find where next section after __lua__ starts (gfx, gff, map, etc)
     next_section_pos = None
     for header_name in section_headers:
         pos = rest.find(header_name)
@@ -79,24 +89,45 @@ def strip_leading_trailing_blank_lines(text: str) -> str:
     return "\n".join(lines)
 
 
+def ensure_tab_marker(content: str, filename: Optional[str] = None) -> str:
+    lines = content.splitlines()
+
+    # Remove any existing PICO-8 tab marker (-->8) & filename comment
+    lines = [
+        line for line in lines
+        if line.strip() != "-->8" and not re.match(r"-- >>> .* <<<", line.strip())
+    ]
+
+    # Rebuild with -->8 tab marker & optional filename comment
+    new_lines = ["-->8"]
+    if filename:
+        new_lines.append(f"-- >>> {filename} <<<")
+    new_lines.extend(lines)
+
+    return "\n".join(new_lines)
+
+
 def write_assembled_code(p8_file: str, include_files: list[str], 
                          header: str, trailing_sections: str
                         ) -> None:
     # Build new lua code from separate / modular files 
     lua_code = ""
     for file_name in include_files:
-        with open(file_name, "r") as f:
+        with open(file_name, "r", encoding="utf-8") as f:
+            # Read contents, stripping trailing spaces & newlines 
             content = f.read()
-            # Strip trailing spaces & newlines at end
-            content = strip_leading_trailing_blank_lines(content)
-            lua_code += f"-- >>> {file_name} <<<\n"
+            content = strip_leading_trailing_blank_lines(text=content)
+            
+            # Add filename comment & ensure PICO-8 tab marker at top (-->8) 
+            content = ensure_tab_marker(content=content, filename=file_name)
+
             lua_code += content + "\n\n\n"
 
     # Reconstruct full p8 file content (+ strip whitespace)
     new_content = header + "__lua__\n" + lua_code.lstrip() + trailing_sections
 
     # Overwrite original p8 file (without editing any graphics parts)
-    with open(p8_file, "w") as f:
+    with open(p8_file, "w", encoding="utf-8") as f:
         f.write(new_content)
 
     print(f"Updated {p8_file} with new Lua code, preserving graphics and map data.")
