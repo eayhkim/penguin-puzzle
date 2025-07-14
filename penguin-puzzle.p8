@@ -169,10 +169,16 @@ function _init()
 
 	statex = "walking"
 	closest = npcs[0]
+	talk_range = 6
 
 	_upd = u_walking_around
 	_drw = d_walking_around
 	offset = 0
+	
+	-- universal animation timers for ui
+	ui_anim_timer = 0
+	ui_anim_speed = 12
+	ui_offset = 0
 end
 
 
@@ -196,7 +202,62 @@ function create_npc(id,sprite,name,x,y)
 		is_unlocked = false
 	}
 
-	add(npcs, npc)
+function u_walking_around()
+	p_move()
+	npcs_move()
+	sharks_move()
+
+	closest = get_nearest_npc()
+	if closest != "none" then
+		if btnp(🅾️) then
+		state = "talking"
+		_upd = u_dialogue
+		_drw = d_dialogue
+		end
+	end
+
+	if btnp(❎) then
+		npcs[npc_index].is_unlocked = true
+		npcs[npc_index].state = "move"
+		npc_index += 1
+		trigger_shake()
+		
+	end
+end
+
+
+function u_dialogue()
+	if btnp(🅾️) then
+		_upd = u_walking_around
+		_drw = d_walking_around
+	end
+end
+
+
+function ready_to_shake()
+	for i = 1, npc_count do 
+		if not npcs[i].is_unlocked then 
+			return false 
+		end
+	end 
+	return true 
+end
+
+
+function trigger_shake()
+	if ready_to_shake() then 
+		offset = 1
+		_upd = u_tip_iceberg
+	end
+end
+
+
+function u_tip_iceberg()
+	screen_shake()
+end
+
+function u_end_game()
+	cls()
 end
 
 
@@ -244,6 +305,9 @@ function get_nearest_npc()
 		if min_dist == curr_dist do 
 			closest = npcs[i]
 		end
+	end
+	if min_dist > talk_range then
+		closest = "none"
 	end
 
 	return closest
@@ -338,10 +402,43 @@ end
 -- >>> update.lua <<<
 -- update / states --
 
-function u_walking_around()
-	p_move()
-	npcs_move()
-	sharks_move()
+
+function d_walking_around()
+	-- ui animation timer
+	ui_anim_timer += 1
+	if ui_anim_timer >= ui_anim_speed then
+		ui_anim_timer = 0
+		ui_offset = (ui_offset + 1) % 2
+	end
+	
+	cls()
+	map()
+	draw_penguins()
+ draw_sharks()
+
+	if closest != "none" then
+			draw_talk_hint()
+	end
+end
+
+function d_dialogue()
+		-- ui animation timer
+	ui_anim_timer += 1
+	if ui_anim_timer >= ui_anim_speed then
+		ui_anim_timer = 0
+		ui_offset = (ui_offset + 1) % 2
+	end
+	
+	cls()
+	map()
+	draw_penguins()
+ draw_sharks()
+ 
+ draw_textbox(closest)
+	draw_big_penguin(closest)
+	
+	print("🅾️ to exit", 85, 2+ui_offset, 7)
+end
 
 	closest = get_nearest_npc()
 
@@ -360,7 +457,18 @@ function u_walking_around()
 end
 
 
-function u_dialogue()
+function draw_talk_hint()
+	local x = closest.x
+	local y = closest.y - 10 + ui_offset
+	
+	spr(36, x, y)
+end
+
+
+function draw_sharks()
+    for shark in all(sharks) do
+        spr(shark.sprite, shark.x, shark.y, 1, 1, shark.flip, false)
+    end
 end
 
 
@@ -381,11 +489,32 @@ function trigger_shake()
 	end
 end
 
+function draw_textbox(peng)
+	-- dithering background
+	fillp(▒)
+	rectfill(0, 128, 128, 108, 6)
+	
+	fillp(░)
+	rectfill(0,108, 128, 88,6)
+	
+	fillp(☉)
+	rectfill(0,88, 128, 68,6)
+	
+	fillp(…)
+	rectfill(0,68, 128, 48,6)
 
-function u_tip_iceberg()
-	screen_shake()
-end
+	fillp(⬅️)
+	-- generate rectangle (0 == index of black color)
+	rectfill(60, 20, 120, 90, 0)
+	rectfill(62, 22, 118, 88, 7)
+	rectfill(66, 26, 114, 84, 6)
 
+	print(peng.name, 75, 35, 1)
+	print("")
+	print("says") 
+	print("hello!")
+	print(":D")
+end	
 
 function u_end_game()
 	cls()
@@ -423,14 +552,14 @@ __gfx__
 00000000ff6d111f00000000fe77777ef3777773fb77777b11777771cc77777caa77777a5577777544777774000000000000000077777766cc77766c77777777
 00000000f1d1111100000000fe7777eef3777733fb7777bbf177771ffc7777cffa7777aff577775ff477774f000000000000000066666666c66666cc77777677
 00000000cc1111cc00000000ff99f99fff99f99fff99f99fff99f99fff99f99fff99f99fff99f99fff99f99f000000000000000066666666cccccccc77777777
-00000000cccccccc000000000000000000000000000000000000000000000000000000000000000000000000666666661c11111111111111cccccccc77777777
-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000066677676111111c111111177c677cccc77777777
-0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000767767771111111111117777c6666ccc77777777
-0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000776767671111c11111777777cccccccc76777777
-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000067777766c111111117777777cc777ccc77777767
-0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000666665661111111117777777c666677c67776777
-0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000565666661c1c111c77777666cccc666c76767676
-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000055555555c111c1c166666666cccccccc66666666
+00000000ccccccccfccccccfffffffffffffffff000000000000000000000000000000000000000000000000666666661c11111111111111cccccccc77777777
+0000000000000000c777776cfcccccfff66666ff00000000000000000000000000000000000000000000000066677676111111c111111177c677cccc77777777
+0000000000000000c77cc66ccc777ccf6611166f000000000000000000000000000000000000000000000000767767771111111111117777c6666ccc77777777
+0000000000000000c7c77c6ccc7c7ccf6616166f000000000000000000000000000000000000000000000000776767671111c11111777777cccccccc76777777
+0000000000000000c7c76c6ccc777ccf6611166f00000000000000000000000000000000000000000000000067777766c111111117777777cc777ccc77777767
+0000000000000000c76cc66c1ccccc1f5666665f000000000000000000000000000000000000000000000000666665661111111117777777c666677c67776777
+0000000000000000c666666cf11111fff55555ff000000000000000000000000000000000000000000000000565666661c1c111c77777666cccc666c76767676
+0000000000000000fccccccfffffffffffffffff00000000000000000000000000000000000000000000000055555555c111c1c166666666cccccccc66666666
 0000000000000000000000000000000000000000000000000000000000000000000000000000000077777777777777777777777711111111cccccccc77777777
 0000000000000000000000000000000000000000000000000000000000000000000000000000000077766767777667677776676711111111cccccccc77777777
 0000000000000000000000000000000000000000000000000000000000000000000000000000000067667665676676666766766611111111cccccccc77777777
