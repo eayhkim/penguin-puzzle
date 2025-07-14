@@ -1,41 +1,77 @@
 -->8
--- drawing --
-
+-- >>> drawing.lua <<<
+-- drawing functions --
 function d_walking_around()
+	-- ui animation timer
+	ui_anim_timer += 1
+	if ui_anim_timer >= ui_anim_speed then
+		ui_anim_timer = 0
+		ui_offset = (ui_offset + 1) % 2
+	end
+	
 	cls()
 	map()
 	draw_penguins()
-    draw_sharks()
+ 	draw_sharks()
 
-	if statex == "talking" then
-		draw_textbox(closest)
-		draw_big_penguin(closest)
+	if closest != "none" then
+		draw_talk_hint()
 	end
+end
+
+
+function d_dialogue()
+	-- ui animation timer
+	ui_anim_timer += 1
+	if ui_anim_timer >= ui_anim_speed then
+		ui_anim_timer = 0
+		ui_offset = (ui_offset + 1) % 2
+	end
+	
+	cls()
+	map()
+	draw_penguins()
+ 	draw_sharks()
+ 
+ 	draw_textbox(closest)
+	draw_big_penguin(closest)
+	
+	print("🅾️ to exit", 85, 2 + ui_offset, 7)
 end
 
 
 function d_end_game()
 	cls()
-	print("you tipped the iceberg!", 30,30, 7)
+	print("you tipped the iceberg!", 30, 30, 7)
 end
 
 
 function draw_penguins()
--- layers sprite drawing based on y position
-p_drawn = false
+	-- layers sprite drawing based on y position
+	p_drawn = false
+
 	for i = 1, npc_count do
 		if npcs[i].y > p.y and not p_drawn then
-				//spr(p.sprite, p.x, p.y)
-				anim_peng(p)
-				p_drawn = true
+			//spr(p.sprite, p.x, p.y)
+			anim_peng(p)
+			p_drawn = true
 		end
 		//spr(npcs[i].sprite, npcs[i].x, npcs[i].y)
 		anim_peng(npcs[i])
 	end
+
 	if not p_drawn then
 		//spr(p.sprite, p.x, p.y)
 		anim_peng(p)
 	end
+end
+
+
+function draw_talk_hint()
+	local x = closest.x
+	local y = closest.y - 10 + ui_offset
+	
+	spr(36, x, y)
 end
 
 
@@ -81,6 +117,20 @@ end
 
 
 function draw_textbox(peng)
+	-- dithering background
+	fillp(▒)
+	rectfill(0, 128, 128, 108, 6)
+	
+	fillp(░)
+	rectfill(0,108, 128, 88,6)
+	
+	fillp(☉)
+	rectfill(0,88, 128, 68,6)
+	
+	fillp(…)
+	rectfill(0,68, 128, 48,6)
+
+	fillp(⬅️)
 	-- generate rectangle (0 == index of black color)
 	rectfill(60, 20, 120, 90, 0)
 	rectfill(62, 22, 118, 88, 7)
@@ -100,5 +150,3 @@ function draw_big_penguin(peng)
 	local sy = (peng.spr_frames[1] \ 16) * 8	
 	sspr(sx, sy, 8, 8, -10, 60, 96, 96, true, false)
 end
-
-

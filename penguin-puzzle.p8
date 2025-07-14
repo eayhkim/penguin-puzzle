@@ -2,14 +2,16 @@ pico-8 cartridge // http://www.pico-8.com
 version 42
 __lua__
 
+-->8
+-- >>> init.lua <<<
+-- init / setup --
 function _init()
 	-- setting map transparency
 	palt(0, false)
 	palt(15, true)
 
-	-- set flag 1 on sprite 62 (light blue water)
-	fset(62, 1, true)  
-
+	-- set flags on sprites 
+	fset(62, 1, true) -- 62 (light blue water)
 
 	p = {
 		x = 50,
@@ -29,6 +31,7 @@ function _init()
 	npc_names = {"joe", "bob", "mary", "jane"}
 	npc_colors = {3, 4, 5, 6, 7, 8, 9, 10}
 	npc_index = 1
+
 	for i = 1, npc_count do
 		create_npc(i, rnd(npc_colors), rnd(npc_names), 16 + rnd(80), 35 + 4 * i)
 	end
@@ -63,6 +66,31 @@ function _init()
 	ui_offset = 0
 end
 
+
+function create_npc(id,sprite,name,x,y)
+	local npc = {
+		id = id,
+		sprite = sprite,
+		spr_frames = {sprite, sprite + 16},
+		anim_timer = 0,
+		anim_speed = 8,
+		anim_index = 0,
+		face_right = false,
+		state = "still",
+		name = name,
+		x = x,
+		y = y,
+		dx = 1,
+		dy = 1,
+		target_x = 25, 
+		target_y = 50,
+		is_unlocked = false
+	}
+
+	add(npcs, npc)
+end
+
+
 function _update()
 	_upd()
 end
@@ -73,10 +101,10 @@ function _draw()
 end
 
 
+
 -->8
--- states --
-
-
+-- >>> update.lua <<<
+-- update / states --
 function u_walking_around()
 	p_move()
 	npcs_move()
@@ -85,9 +113,9 @@ function u_walking_around()
 	closest = get_nearest_npc()
 	if closest != "none" then
 		if btnp(🅾️) then
-		state = "talking"
-		_upd = u_dialogue
-		_drw = d_dialogue
+			state = "talking"
+			_upd = u_dialogue
+			_drw = d_dialogue
 		end
 	end
 
@@ -96,7 +124,6 @@ function u_walking_around()
 		npcs[npc_index].state = "move"
 		npc_index += 1
 		trigger_shake()
-		
 	end
 end
 
@@ -131,6 +158,7 @@ function u_tip_iceberg()
 	screen_shake()
 end
 
+
 function u_end_game()
 	cls()
 end
@@ -138,6 +166,7 @@ end
 
 
 -->8
+-- >>> utils.lua <<<
 -- helper / reusable functions --
 function dst(o1, o2)
  	return sqrt(sqr(o1.x - o2.x) + sqr(o1.y - o2.y))
@@ -151,6 +180,7 @@ end
 
 
 -->8
+-- >>> movement.lua <<<
 -- movement functions --
 function on_sprite_zone(new_x, new_y, flag)
 	-- reusable helper to check if coords on iceberg, on water, etc
@@ -165,9 +195,9 @@ function shark_fully_in_water(x, y)
 	local padding = 0 
 
     return on_sprite_zone(x + padding, y + padding, 1) and
-           on_sprite_zone(x + 7 - padding, y + padding,1) and
-           on_sprite_zone(x + padding, y + 7 - padding,1) and
-           on_sprite_zone(x + 7 - padding, y + 7 - padding,1)
+           on_sprite_zone(x + 7 - padding, y + padding, 1) and
+           on_sprite_zone(x + padding, y + 7 - padding, 1) and
+           on_sprite_zone(x + 7 - padding, y + 7 - padding, 1)
 end
 
 
@@ -177,7 +207,7 @@ function random_water_position()
     repeat
         new_x = flr(rnd(128))
         new_y = flr(rnd(128))
-    until on_sprite_zone(new_x, new_y,1)
+    until on_sprite_zone(new_x, new_y, 1)
     return new_x, new_y
 end
 
@@ -193,6 +223,7 @@ function get_nearest_npc()
 			closest = npcs[i]
 		end
 	end
+
 	if min_dist > talk_range then
 		closest = "none"
 	end
@@ -286,8 +317,8 @@ end
 
 
 -->8
+-- >>> drawing.lua <<<
 -- drawing functions --
-
 function d_walking_around()
 	-- ui animation timer
 	ui_anim_timer += 1
@@ -299,15 +330,16 @@ function d_walking_around()
 	cls()
 	map()
 	draw_penguins()
- draw_sharks()
+ 	draw_sharks()
 
 	if closest != "none" then
-			draw_talk_hint()
+		draw_talk_hint()
 	end
 end
 
+
 function d_dialogue()
-		-- ui animation timer
+	-- ui animation timer
 	ui_anim_timer += 1
 	if ui_anim_timer >= ui_anim_speed then
 		ui_anim_timer = 0
@@ -317,32 +349,35 @@ function d_dialogue()
 	cls()
 	map()
 	draw_penguins()
- draw_sharks()
+ 	draw_sharks()
  
- draw_textbox(closest)
+ 	draw_textbox(closest)
 	draw_big_penguin(closest)
 	
-	print("🅾️ to exit", 85, 2+ui_offset, 7)
+	print("🅾️ to exit", 85, 2 + ui_offset, 7)
 end
+
 
 function d_end_game()
 	cls()
-	print("you tipped the iceberg!", 30,30, 7)
+	print("you tipped the iceberg!", 30, 30, 7)
 end
 
 
 function draw_penguins()
--- layers sprite drawing based on y position
-p_drawn = false
+	-- layers sprite drawing based on y position
+	p_drawn = false
+
 	for i = 1, npc_count do
 		if npcs[i].y > p.y and not p_drawn then
-				//spr(p.sprite, p.x, p.y)
-				anim_peng(p)
-				p_drawn = true
+			//spr(p.sprite, p.x, p.y)
+			anim_peng(p)
+			p_drawn = true
 		end
 		//spr(npcs[i].sprite, npcs[i].x, npcs[i].y)
 		anim_peng(npcs[i])
 	end
+
 	if not p_drawn then
 		//spr(p.sprite, p.x, p.y)
 		anim_peng(p)
@@ -435,31 +470,6 @@ function draw_big_penguin(peng)
 end
 
 
--->8
--- init functions --
-
-function create_npc(id,sprite,name,x,y)
-	local npc = {
-		id = id,
-		sprite = sprite,
-		spr_frames = {sprite, sprite + 16},
-		anim_timer = 0,
-		anim_speed = 8,
-		anim_index = 0,
-		face_right = false,
-		state = "still",
-		name = name,
-		x = x,
-		y = y,
-		dx = 1,
-		dy = 1,
-		target_x = 25, 
-		target_y = 50,
-		is_unlocked = false
-	}
-
-	add(npcs, npc)
-end
 
 __gfx__
 00000000ffddddfffffddddfffeeeeffff3333ffffbbbbffff1111ffffccccffffaaaaffff5555ffff4444ff6611111111116666111111117777777667777777

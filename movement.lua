@@ -1,13 +1,13 @@
 -->8
--- movement --
-
+-- >>> movement.lua <<<
+-- movement functions --
 function on_sprite_zone(new_x, new_y, flag)
 	-- reusable helper to check if coords on iceberg, on water, etc
 	local tile_x = new_x / 8
 	local tile_y = new_y / 8
-  	return fget(mget(tile_x,tile_y), flag)
+	
+	return fget(mget(tile_x,tile_y), flag)
 end
-
 
 function shark_fully_in_water(x, y)
 	-- can adjust padding, but for now 0 seems best?
@@ -41,6 +41,10 @@ function get_nearest_npc()
 		if min_dist == curr_dist do 
 			closest = npcs[i]
 		end
+	end
+
+	if min_dist > talk_range then
+		closest = "none"
 	end
 
 	return closest
@@ -129,5 +133,3 @@ function sharks_move()
         end
     end
 end
-
-

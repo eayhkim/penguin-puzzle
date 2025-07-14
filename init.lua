@@ -1,16 +1,6 @@
 -->8
+-- >>> init.lua <<<
 -- init / setup --
-
-function _update()
-	_upd()
-end
-
-
-function _draw()
-	_drw()
-end
-
-
 function _init()
 	-- setting map transparency
 	palt(0, false)
@@ -60,10 +50,16 @@ function _init()
 
 	statex = "walking"
 	closest = npcs[0]
+	talk_range = 6
 
 	_upd = u_walking_around
 	_drw = d_walking_around
 	offset = 0
+	
+	-- universal animation timers for ui
+	ui_anim_timer = 0
+	ui_anim_speed = 12
+	ui_offset = 0
 end
 
 
@@ -91,3 +87,11 @@ function create_npc(id,sprite,name,x,y)
 end
 
 
+function _update()
+	_upd()
+end
+
+
+function _draw()
+	_drw()
+end
