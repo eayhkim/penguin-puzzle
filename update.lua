@@ -1,17 +1,18 @@
 -->8
+-- >>> update.lua <<<
 -- update / states --
-
 function u_walking_around()
 	p_move()
 	npcs_move()
 	sharks_move()
 
 	closest = get_nearest_npc()
-
-	if btnp(🅾️) then
-		statex = "talking"
-	else
-
+	if closest != "none" then
+		if btnp(🅾️) then
+			state = "talking"
+			_upd = u_dialogue
+			_drw = d_dialogue
+		end
 	end
 
 	if btnp(❎) then
@@ -24,6 +25,10 @@ end
 
 
 function u_dialogue()
+	if btnp(🅾️) then
+		_upd = u_walking_around
+		_drw = d_walking_around
+	end
 end
 
 
@@ -53,5 +58,3 @@ end
 function u_end_game()
 	cls()
 end
-
-
