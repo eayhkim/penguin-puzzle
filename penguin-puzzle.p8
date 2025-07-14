@@ -85,7 +85,9 @@ function u_walking_around()
 	closest = get_nearest_npc()
 	if closest != "none" then
 		if btnp(🅾️) then
-		statex = "talking"
+		state = "talking"
+		_upd = u_dialogue
+		_drw = d_dialogue
 		end
 	end
 
@@ -100,6 +102,10 @@ end
 
 
 function u_dialogue()
+	if btnp(🅾️) then
+		_upd = u_walking_around
+		_drw = d_walking_around
+	end
 end
 
 
@@ -303,16 +309,29 @@ function d_walking_around()
 	draw_penguins()
  draw_sharks()
 
-	if statex == "talking" then
-		draw_textbox(closest)
-		draw_big_penguin(closest)
-	else
-		if closest != "none" then
+	if closest != "none" then
 			draw_talk_hint()
-		end
 	end
 end
 
+function d_dialogue()
+		-- ui animation timer
+	ui_anim_timer += 1
+	if ui_anim_timer >= ui_anim_speed then
+		ui_anim_timer = 0
+		ui_offset = (ui_offset + 1) % 2
+	end
+	
+	cls()
+	map()
+	draw_penguins()
+ draw_sharks()
+ 
+ draw_textbox(closest)
+	draw_big_penguin(closest)
+	
+	print("🅾️ to exit", 85, 2+ui_offset, 7)
+end
 
 function d_end_game()
 	cls()
