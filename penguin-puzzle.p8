@@ -2,6 +2,126 @@ pico-8 cartridge // http://www.pico-8.com
 version 42
 __lua__
 -->8
+-- >>> dialogues.lua <<<
+-- npc dialogues --
+npc_dialogues = {
+    greetings = {
+        {
+            text = "hey there, cool flippers!",
+            responses = {
+                { text = "thanks! so what's up?", next = "get_quest" },
+                { text = "not interested", next = "end" }
+            }
+        },
+        {
+            text = "move it, i'm waddling here!",
+            responses = {
+                { text = "uhh where are you going?", next = "get_quest" },
+                { text = "so am i! outta the way!", next = "end" }
+            }
+        },
+        {
+            text = "hey you're new! wanna talk?",
+            responses = {
+                { text = "sure", next = "get_quest" },
+                { text = "nope, i'm good", next = "end" }
+            }
+        },
+    },
+    quests = {
+        {
+            text = "have you seen my fish?",
+            responses = {
+                { text = "what fish?", next = "find_fish" },
+                { text = "sorry buddy, good luck", next = "end" }
+            }
+        },
+        {
+            text = "iceberg's gonna tip lol.",
+            responses = {
+                { text = "lol i'll get my hard hat", next = "tip_iceberg" },
+                { text = "you're delusional", next = "end" }
+            }
+        },
+        {
+            text = "you see those sharks too right...",
+            responses = {
+                { text = "yeah, but i'm not worried", next = "defeat_sharks" },
+                { text = "yep, and i'm staying far away", next = "end" }
+            }
+        },
+        {
+            text = "wanna cause some chaos?",
+            responses = {
+                { text = "i live for this", next = "throw_snowballs" },
+                { text = "no way. my ban just lifted!", next = "end" }
+            }
+        },
+        {
+            text = "i could really use a wing here...",
+            responses = {
+                { text = "sure thing", next = "find_penguin" },
+                { text = "sorry, i'm busy", next = "end" }
+            }
+        },
+    }
+}
+
+
+function start_convo(peng)
+    -- draw_textbox(peng)
+    get_response(peng)
+
+    local d = peng.dialogue_state
+    local n = d.selected
+
+    if d.selected then
+        -- reset to avoid repeating on next advance
+        d.selected = nil
+        d.selected_index = 1
+
+        if d.stage == "greeting" and n == "get_quest" then 
+            d.stage = "quest"
+            d.curr = rnd(npc_dialogues.quests)
+
+        elseif n == "end" then
+            end_convo()
+
+        else -- on quest stage
+            -- trigger_quest(n, peng) 
+            end_convo()
+        end
+    end
+end
+
+
+function end_convo(peng)
+    if peng then
+        peng.dialogue_state = nil
+    end
+end
+
+
+function get_response(peng)
+    local d = peng.dialogue_state
+    local responses = d.curr.responses
+
+    -- navigate choices
+    if btnp(⬆️) then 
+        d.selected_index = max(1, d.selected_index - 1)
+    elseif btnp(⬇️) then 
+        d.selected_index = min(#responses, d.selected_index + 1)
+    end
+
+    -- confirm selection
+    if btnp(❎) then 
+        local choice = responses[d.selected_index]
+        d.selected = choice.next
+    end
+end
+
+
+-->8
 -- >>> drawing.lua <<<
 -- drawing functions --
 function d_walking_around()
@@ -150,7 +270,7 @@ function draw_textbox(peng)
 	rectfill(0,68, 128, 48,6)
 
 	fillp(⬅️)
-	-- generate rectangle (0 == index of black color)
+	-- generate rectangle
 	rectfill(60, 20, 120, 90, 0)
 	rectfill(62, 22, 118, 88, 7)
 	rectfill(66, 26, 114, 84, 6)
@@ -158,7 +278,9 @@ function draw_textbox(peng)
 	-- local hello_name = peng.name .. " says hello! :D"
 	-- draw_center_txt_rect(hello_name, 66, 26, 114, 84, 1)
 
-	draw_center_txt_rect(peng.message, 66, 26, 114, 84, 1)
+	-- draw_center_txt_rect(peng.message, 66, 26, 114, 84, 1)
+
+	draw_center_txt_rect(peng.dialogue_state.curr.text, 66, 26, 114, 84, 1)
 end	
 
 
@@ -259,6 +381,12 @@ function create_npc(id,sprite,name,x,y)
 		target_x = 25, 
 		target_y = 50,
 		message = rnd(npc_messages),
+		dialogue_state = {
+			stage = "greeting",
+			curr = rnd(npc_dialogues.greetings),
+			selected = 1
+		},
+		quest_state = nil,
 		is_unlocked = false
 	}
 
@@ -444,6 +572,8 @@ function u_dialogue()
 		_upd = u_walking_around
 		_drw = d_walking_around
 	end
+
+	start_convo(closest)
 end
 
 

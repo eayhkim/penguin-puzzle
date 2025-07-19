@@ -29,6 +29,8 @@ function u_dialogue()
 		_upd = u_walking_around
 		_drw = d_walking_around
 	end
+
+	start_convo(closest)
 end
 
 

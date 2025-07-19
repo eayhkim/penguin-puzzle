@@ -87,6 +87,12 @@ function create_npc(id,sprite,name,x,y)
 		target_x = 25, 
 		target_y = 50,
 		message = rnd(npc_messages),
+		dialogue_state = {
+			stage = "greeting",
+			curr = rnd(npc_dialogues.greetings),
+			selected = nil
+		},
+		quest_state = nil,
 		is_unlocked = false
 	}
 

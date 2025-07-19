@@ -155,7 +155,9 @@ function draw_textbox(peng)
 	-- local hello_name = peng.name .. " says hello! :D"
 	-- draw_center_txt_rect(hello_name, 66, 26, 114, 84, 1)
 
-	draw_center_txt_rect(peng.message, 66, 26, 114, 84, 1)
+	-- draw_center_txt_rect(peng.message, 66, 26, 114, 84, 1)
+
+	draw_center_txt_rect(peng.dialogue_state.curr.text, 66, 26, 114, 84, 1)
 end	
 
 
