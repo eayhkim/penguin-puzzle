@@ -23,10 +23,16 @@ function _init()
 	}
 
 	npcs = {}
+	npc_index = 1
 	npc_count = 10
+
 	npc_names = {"joe", "bob", "mary", "jane"}
 	npc_colors = {3, 4, 5, 6, 7, 8, 9, 10}
-	npc_index = 1
+	npc_messages = {
+		"party at my iggy!",
+		"we just need one more penguin to tip the iceberg!",
+		"you have been banned from club penguin"
+	}
 
 	for i = 1, npc_count do
 		create_npc(i, rnd(npc_colors), rnd(npc_names), 16 + rnd(80), 35 + 4 * i)
@@ -80,6 +86,7 @@ function create_npc(id,sprite,name,x,y)
 		dy = 1,
 		target_x = 25, 
 		target_y = 50,
+		message = rnd(npc_messages),
 		is_unlocked = false
 	}
 

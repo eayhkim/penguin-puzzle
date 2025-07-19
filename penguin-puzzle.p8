@@ -1,6 +1,174 @@
 pico-8 cartridge // http://www.pico-8.com
 version 42
 __lua__
+-->8
+-- >>> drawing.lua <<<
+-- drawing functions --
+function d_walking_around()
+	-- ui animation timer
+	ui_anim_timer += 1
+	if ui_anim_timer >= ui_anim_speed then
+		ui_anim_timer = 0
+		ui_offset = (ui_offset + 1) % 2
+	end
+	
+	cls()
+	map()
+	draw_penguins()
+ 	draw_sharks()
+
+	if closest != "none" then
+		draw_talk_hint()
+	end
+end
+
+
+function d_dialogue()
+	-- ui animation timer
+	ui_anim_timer += 1
+	if ui_anim_timer >= ui_anim_speed then
+		ui_anim_timer = 0
+		ui_offset = (ui_offset + 1) % 2
+	end
+	
+	cls()
+	map()
+	draw_penguins()
+ 	draw_sharks()
+ 
+ 	draw_textbox(closest)
+	draw_big_penguin(closest)
+	
+	print("🅾️ to exit", 85, 2 + ui_offset, 7)
+end
+
+
+function d_end_game()
+	cls()
+	print("you tipped the iceberg!", 30, 30, 7)
+end
+
+
+function draw_penguins()
+	-- layers sprite drawing based on y position
+	p_drawn = false
+
+	for i = 1, npc_count do
+		if npcs[i].y > p.y and not p_drawn then
+			//spr(p.sprite, p.x, p.y)
+			anim_peng(p)
+			p_drawn = true
+		end
+		//spr(npcs[i].sprite, npcs[i].x, npcs[i].y)
+		anim_peng(npcs[i])
+	end
+
+	if not p_drawn then
+		//spr(p.sprite, p.x, p.y)
+		anim_peng(p)
+	end
+end
+
+
+function draw_talk_hint()
+	local x = closest.x
+	local y = closest.y - 10 + ui_offset
+	
+	spr(36, x, y)
+end
+
+
+function draw_sharks()
+    for shark in all(sharks) do
+        spr(shark.sprite, shark.x, shark.y, 1, 1, shark.flip, false)
+    end
+end
+
+
+function anim_peng(peng)
+	if peng.state == "still" then
+			spr(peng.spr_frames[1], peng.x, peng.y, 1,1,peng.face_right)
+	else
+		peng.anim_timer += 1
+		if peng.anim_timer >= peng.anim_speed then
+			peng.anim_index = (peng.anim_index + 1) % 2
+			peng.anim_timer = 0
+		end
+		
+		spr(peng.spr_frames[peng.anim_index+1], peng.x, peng.y, 1,1,peng.face_right)
+	end
+end
+
+
+function screen_shake()
+	local grow = 1.05
+	local offset_x = 4 - rnd(8)
+	local offset_y = 4 - rnd(8)
+	
+	offset_x *= offset
+	offset_y *= offset
+	
+	camera(offset_x,offset_y)
+	
+	offset *= grow
+	
+	if offset >= 20 then
+		_upd = u_end_game
+		_drw = d_end_game
+	end
+end
+
+
+-- params: text, rect box coords (x0, y0, x1, y1), color
+function draw_center_txt_rect(t, x0, y0, x1, y1, c)
+    local w = x1 - x0 + 2
+    local h = y1 - y0 + 2
+    local pad = 4  -- pixel padding inside box
+
+    local lines = wrap_txt(t, w - pad*2, h - pad*2)
+    local sy = y0 + pad + (h - pad*2 - #lines * 8) \ 2
+
+    for i, line in ipairs(lines) do
+        local px = x0 + pad + (w - pad*2 - #line * 4) \ 2
+        print(line, px, sy + (i - 1) * 8, c)
+    end
+end
+
+
+function draw_textbox(peng)
+	-- dithering background
+	fillp(▒)
+	rectfill(0, 128, 128, 108, 6)
+	
+	fillp(░)
+	rectfill(0,108, 128, 88,6)
+	
+	fillp(☉)
+	rectfill(0,88, 128, 68,6)
+	
+	fillp(…)
+	rectfill(0,68, 128, 48,6)
+
+	fillp(⬅️)
+	-- generate rectangle (0 == index of black color)
+	rectfill(60, 20, 120, 90, 0)
+	rectfill(62, 22, 118, 88, 7)
+	rectfill(66, 26, 114, 84, 6)
+
+	-- local hello_name = peng.name .. " says hello! :D"
+	-- draw_center_txt_rect(hello_name, 66, 26, 114, 84, 1)
+
+	draw_center_txt_rect(peng.message, 66, 26, 114, 84, 1)
+end	
+
+
+function draw_big_penguin(peng)
+	-- identify sprite location in grid, then scale size
+	local sx = (peng.spr_frames[1] % 16) * 8
+	local sy = (peng.spr_frames[1] \ 16) * 8	
+	sspr(sx, sy, 8, 8, -10, 60, 96, 96, true, false)
+end
+
 
 -->8
 -- >>> init.lua <<<
@@ -27,10 +195,16 @@ function _init()
 	}
 
 	npcs = {}
+	npc_index = 1
 	npc_count = 10
+
 	npc_names = {"joe", "bob", "mary", "jane"}
 	npc_colors = {3, 4, 5, 6, 7, 8, 9, 10}
-	npc_index = 1
+	npc_messages = {
+		"party at my iggy!",
+		"we just need one more penguin to tip the iceberg!",
+		"you have been banned from club penguin"
+	}
 
 	for i = 1, npc_count do
 		create_npc(i, rnd(npc_colors), rnd(npc_names), 16 + rnd(80), 35 + 4 * i)
@@ -84,6 +258,7 @@ function create_npc(id,sprite,name,x,y)
 		dy = 1,
 		target_x = 25, 
 		target_y = 50,
+		message = rnd(npc_messages),
 		is_unlocked = false
 	}
 
@@ -99,84 +274,6 @@ end
 function _draw()
 	_drw()
 end
-
-
-
--->8
--- >>> update.lua <<<
--- update / states --
-function u_walking_around()
-	p_move()
-	npcs_move()
-	sharks_move()
-
-	closest = get_nearest_npc()
-	if closest != "none" then
-		if btnp(🅾️) then
-			state = "talking"
-			_upd = u_dialogue
-			_drw = d_dialogue
-		end
-	end
-
-	if btnp(❎) then
-		npcs[npc_index].is_unlocked = true
-		npcs[npc_index].state = "move"
-		npc_index += 1
-		trigger_shake()
-	end
-end
-
-
-function u_dialogue()
-	if btnp(🅾️) then
-		_upd = u_walking_around
-		_drw = d_walking_around
-	end
-end
-
-
-function ready_to_shake()
-	for i = 1, npc_count do 
-		if not npcs[i].is_unlocked then 
-			return false 
-		end
-	end 
-	return true 
-end
-
-
-function trigger_shake()
-	if ready_to_shake() then 
-		offset = 1
-		_upd = u_tip_iceberg
-	end
-end
-
-
-function u_tip_iceberg()
-	screen_shake()
-end
-
-
-function u_end_game()
-	cls()
-end
-
-
-
--->8
--- >>> utils.lua <<<
--- helper / reusable functions --
-function dst(o1, o2)
- 	return sqrt(sqr(o1.x - o2.x) + sqr(o1.y - o2.y))
-end
-
-
-function sqr(x) 
-	return x * x 
-end
-
 
 
 -->8
@@ -317,158 +414,109 @@ end
 
 
 -->8
--- >>> drawing.lua <<<
--- drawing functions --
-function d_walking_around()
-	-- ui animation timer
-	ui_anim_timer += 1
-	if ui_anim_timer >= ui_anim_speed then
-		ui_anim_timer = 0
-		ui_offset = (ui_offset + 1) % 2
-	end
-	
-	cls()
-	map()
-	draw_penguins()
- 	draw_sharks()
+-- >>> update.lua <<<
+-- update / states --
+function u_walking_around()
+	p_move()
+	npcs_move()
+	sharks_move()
 
+	closest = get_nearest_npc()
 	if closest != "none" then
-		draw_talk_hint()
-	end
-end
-
-
-function d_dialogue()
-	-- ui animation timer
-	ui_anim_timer += 1
-	if ui_anim_timer >= ui_anim_speed then
-		ui_anim_timer = 0
-		ui_offset = (ui_offset + 1) % 2
-	end
-	
-	cls()
-	map()
-	draw_penguins()
- 	draw_sharks()
- 
- 	draw_textbox(closest)
-	draw_big_penguin(closest)
-	
-	print("🅾️ to exit", 85, 2 + ui_offset, 7)
-end
-
-
-function d_end_game()
-	cls()
-	print("you tipped the iceberg!", 30, 30, 7)
-end
-
-
-function draw_penguins()
-	-- layers sprite drawing based on y position
-	p_drawn = false
-
-	for i = 1, npc_count do
-		if npcs[i].y > p.y and not p_drawn then
-			//spr(p.sprite, p.x, p.y)
-			anim_peng(p)
-			p_drawn = true
+		if btnp(🅾️) then
+			state = "talking"
+			_upd = u_dialogue
+			_drw = d_dialogue
 		end
-		//spr(npcs[i].sprite, npcs[i].x, npcs[i].y)
-		anim_peng(npcs[i])
 	end
 
-	if not p_drawn then
-		//spr(p.sprite, p.x, p.y)
-		anim_peng(p)
+	if btnp(❎) then
+		npcs[npc_index].is_unlocked = true
+		npcs[npc_index].state = "move"
+		npc_index += 1
+		trigger_shake()
 	end
 end
 
 
-function draw_talk_hint()
-	local x = closest.x
-	local y = closest.y - 10 + ui_offset
-	
-	spr(36, x, y)
+function u_dialogue()
+	if btnp(🅾️) then
+		_upd = u_walking_around
+		_drw = d_walking_around
+	end
 end
 
 
-function draw_sharks()
-    for shark in all(sharks) do
-        spr(shark.sprite, shark.x, shark.y, 1, 1, shark.flip, false)
+function ready_to_shake()
+	for i = 1, npc_count do 
+		if not npcs[i].is_unlocked then 
+			return false 
+		end
+	end 
+	return true 
+end
+
+
+function trigger_shake()
+	if ready_to_shake() then 
+		offset = 1
+		_upd = u_tip_iceberg
+	end
+end
+
+
+function u_tip_iceberg()
+	screen_shake()
+end
+
+
+function u_end_game()
+	cls()
+end
+
+
+-->8
+-- >>> utils.lua <<<
+-- helper / reusable functions --
+function dst(o1, o2)
+ 	return sqrt(sqr(o1.x - o2.x) + sqr(o1.y - o2.y))
+end
+
+
+function sqr(x) 
+	return x * x 
+end
+
+
+function wrap_txt(t, w, h)
+    local lines = {}
+    local line = ""
+    local lw = 0
+    local max = flr(h / 8)
+
+    for word in all(split(t, " ")) do
+        local ww = #word * 4
+        if lw + ww <= w then
+            if line != "" then
+				-- str concat (..=)
+                line ..= " "
+                lw += 4
+            end
+            line ..= word
+            lw += ww
+        else
+            add(lines, line)
+            if #lines == max then return lines end
+            line, lw = word, ww
+        end
     end
+
+    if line != "" and #lines < max then
+        add(lines, line)
+    end
+
+    return lines
 end
-
-
-function anim_peng(peng)
-	if peng.state == "still" then
-			spr(peng.spr_frames[1], peng.x, peng.y, 1,1,peng.face_right)
-	else
-		peng.anim_timer += 1
-		if peng.anim_timer >= peng.anim_speed then
-			peng.anim_index = (peng.anim_index + 1) % 2
-			peng.anim_timer = 0
-		end
-		
-		spr(peng.spr_frames[peng.anim_index+1], peng.x, peng.y, 1,1,peng.face_right)
-	end
-end
-
-
-function screen_shake()
-	local grow = 1.05
-	local offset_x = 4 - rnd(8)
-	local offset_y = 4 - rnd(8)
-	
-	offset_x *= offset
-	offset_y *= offset
-	
-	camera(offset_x,offset_y)
-	
-	offset *= grow
-	
-	if offset >= 20 then
-		_upd = u_end_game
-		_drw = d_end_game
-	end
-end
-
-
-function draw_textbox(peng)
-	-- dithering background
-	fillp(▒)
-	rectfill(0, 128, 128, 108, 6)
-	
-	fillp(░)
-	rectfill(0,108, 128, 88,6)
-	
-	fillp(☉)
-	rectfill(0,88, 128, 68,6)
-	
-	fillp(…)
-	rectfill(0,68, 128, 48,6)
-
-	fillp(⬅️)
-	-- generate rectangle (0 == index of black color)
-	rectfill(60, 20, 120, 90, 0)
-	rectfill(62, 22, 118, 88, 7)
-	rectfill(66, 26, 114, 84, 6)
-
-	print(peng.name, 75, 35, 1)
-	print("")
-	print("says") 
-	print("hello!")
-	print(":D")
-end	
-
-
-function draw_big_penguin(peng)
-	-- identify sprite location in grid, then scale size
-	local sx = (peng.spr_frames[1] % 16) * 8
-	local sy = (peng.spr_frames[1] \ 16) * 8	
-	sspr(sx, sy, 8, 8, -10, 60, 96, 96, true, false)
-end
-
 
 
 __gfx__

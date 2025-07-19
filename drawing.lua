@@ -116,6 +116,22 @@ function screen_shake()
 end
 
 
+-- params: text, rect box coords (x0, y0, x1, y1), color
+function draw_center_txt_rect(t, x0, y0, x1, y1, c)
+    local w = x1 - x0 + 2
+    local h = y1 - y0 + 2
+    local pad = 4  -- pixel padding inside box
+
+    local lines = wrap_txt(t, w - pad*2, h - pad*2)
+    local sy = y0 + pad + (h - pad*2 - #lines * 8) \ 2
+
+    for i, line in ipairs(lines) do
+        local px = x0 + pad + (w - pad*2 - #line * 4) \ 2
+        print(line, px, sy + (i - 1) * 8, c)
+    end
+end
+
+
 function draw_textbox(peng)
 	-- dithering background
 	fillp(▒)
@@ -131,16 +147,15 @@ function draw_textbox(peng)
 	rectfill(0,68, 128, 48,6)
 
 	fillp(⬅️)
-	-- generate rectangle (0 == index of black color)
+	-- generate rectangle
 	rectfill(60, 20, 120, 90, 0)
 	rectfill(62, 22, 118, 88, 7)
 	rectfill(66, 26, 114, 84, 6)
 
-	print(peng.name, 75, 35, 1)
-	print("")
-	print("says") 
-	print("hello!")
-	print(":D")
+	-- local hello_name = peng.name .. " says hello! :D"
+	-- draw_center_txt_rect(hello_name, 66, 26, 114, 84, 1)
+
+	draw_center_txt_rect(peng.message, 66, 26, 114, 84, 1)
 end	
 
 
