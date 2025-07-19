@@ -69,35 +69,26 @@ npc_dialogues = {
 
 
 function start_convo(peng)
-    -- draw_textbox(peng)
     get_response(peng)
 
     local d = peng.dialogue_state
-    local n = d.selected
 
-    if d.selected then
+    if d.selected_idx then
         -- reset to avoid repeating on next advance
-        d.selected = nil
-        d.selected_index = 1
+        d.selected_idx = nil
+        d.next = nil
 
-        if d.stage == "greeting" and n == "get_quest" then 
+        if d.stage == "greeting" and d.next == "get_quest" then 
             d.stage = "quest"
             d.curr = rnd(npc_dialogues.quests)
 
-        elseif n == "end" then
-            end_convo()
+        elseif d.next == "end" then
+            peng.dialogue_state = nil
 
         else -- on quest stage
+            d.stage = "end"
             -- trigger_quest(n, peng) 
-            end_convo()
         end
-    end
-end
-
-
-function end_convo(peng)
-    if peng then
-        peng.dialogue_state = nil
     end
 end
 
@@ -106,17 +97,22 @@ function get_response(peng)
     local d = peng.dialogue_state
     local responses = d.curr.responses
 
+    -- initialize d.selected if not set yet
+    if not d.selected_idx then
+        d.selected_idx = 1
+    end
+
     -- navigate choices
     if btnp(⬆️) then 
-        d.selected_index = max(1, d.selected_index - 1)
+        d.selected_idx = max(1, d.selected_idx - 1)
     elseif btnp(⬇️) then 
-        d.selected_index = min(#responses, d.selected_index + 1)
+        d.selected_idx = min(#responses, d.selected_idx + 1)
     end
 
     -- confirm selection
     if btnp(❎) then 
-        local choice = responses[d.selected_index]
-        d.selected = choice.next
+        local choice = responses[d.selected_idx]
+        d.next = choice.next
     end
 end
 
@@ -384,7 +380,8 @@ function create_npc(id,sprite,name,x,y)
 		dialogue_state = {
 			stage = "greeting",
 			curr = rnd(npc_dialogues.greetings),
-			selected = 1
+			selected_idx = nil,
+			next = nil
 		},
 		quest_state = nil,
 		is_unlocked = false

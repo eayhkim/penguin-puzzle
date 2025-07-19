@@ -90,7 +90,8 @@ function create_npc(id,sprite,name,x,y)
 		dialogue_state = {
 			stage = "greeting",
 			curr = rnd(npc_dialogues.greetings),
-			selected = nil
+			selected_idx = nil,
+			next = nil
 		},
 		quest_state = nil,
 		is_unlocked = false
