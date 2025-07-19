@@ -2,8 +2,8 @@ pico-8 cartridge // http://www.pico-8.com
 version 42
 __lua__
 -->8
--- >>> dialogues.lua <<<
--- npc dialogues --
+-- >>> dialogue.lua <<<
+-- npc dialogue --
 npc_dialogues = {
     greetings = {
         {
@@ -69,27 +69,28 @@ npc_dialogues = {
 
 
 function start_convo(peng)
-    get_response(peng)
-
     local d = peng.dialogue_state
 
-    if d.selected_idx then
-        -- reset to avoid repeating on next advance
-        d.selected_idx = nil
-        d.next = nil
-
-        if d.stage == "greeting" and d.next == "get_quest" then 
-            d.stage = "quest"
-            d.curr = rnd(npc_dialogues.quests)
-
-        elseif d.next == "end" then
-            peng.dialogue_state = nil
-
-        else -- on quest stage
-            d.stage = "end"
-            -- trigger_quest(n, peng) 
-        end
+    if not d.next then
+        get_response(peng)
+        return
     end
+
+    if d.stage == "greeting" and d.next == "get_quest" then 
+        d.stage = "quest"
+        d.curr = rnd(npc_dialogues.quests)
+
+    elseif d.next == "end" then
+        peng.dialogue_state = nil
+
+    else -- on quest stage
+        d.stage = "end"
+        -- trigger_quest(n, peng) 
+    end
+
+    -- reset to avoid repeating on next advance
+    d.selected_idx = nil
+    d.next = nil
 end
 
 
@@ -154,7 +155,11 @@ function d_dialogue()
  
  	draw_textbox(closest)
 	draw_big_penguin(closest)
-	
+
+	if closest.dialogue_state then 
+		draw_choices(closest)
+	end 
+
 	print("🅾️ to exit", 85, 2 + ui_offset, 7)
 end
 
@@ -276,8 +281,37 @@ function draw_textbox(peng)
 
 	-- draw_center_txt_rect(peng.message, 66, 26, 114, 84, 1)
 
-	draw_center_txt_rect(peng.dialogue_state.curr.text, 66, 26, 114, 84, 1)
+	if peng.dialogue_state then 
+		draw_center_txt_rect(peng.dialogue_state.curr.text, 66, 26, 114, 84, 1)
+	else 
+		draw_center_txt_rect(peng.message, 66, 26, 114, 84, 1)
+	end
 end	
+
+
+function draw_choices(peng)
+	local responses = peng.dialogue_state.curr.responses
+    local selected_index = peng.dialogue_state.selected_idx or 1
+
+    local start_y = 92  -- just below main box
+    local pad = 4
+
+    for i, resp in ipairs(responses) do
+        local y = start_y + (i - 1) * 12
+        local x0, y0 = 60, y
+        local x1, y1 = 118, y + 10
+
+        -- highlight selected response
+        if i == selected_index then
+            rectfill(x0, y0, x1, y1, 8) 
+            print(">", x0 - 6, y0 + 2, 8)  -- cursor arrow before text
+            print(resp.text, x0 + pad, y0 + 2, 7) 
+        else
+            rectfill(x0, y0, x1, y1, 6) 
+            print(resp.text, x0 + pad, y0 + 2, 5) 
+        end
+    end
+end
 
 
 function draw_big_penguin(peng)
@@ -319,9 +353,9 @@ function _init()
 	npc_names = {"joe", "bob", "mary", "jane"}
 	npc_colors = {3, 4, 5, 6, 7, 8, 9, 10}
 	npc_messages = {
-		"party at my iggy!",
-		"we just need one more penguin to tip the iceberg!",
-		"you have been banned from club penguin"
+		"cool meeting you. party at my iggy!",
+		"so anyways, we need more penguins to tip the iceberg",
+		"ok well... you've been banned from club penguin"
 	}
 
 	for i = 1, npc_count do
@@ -565,12 +599,14 @@ end
 
 
 function u_dialogue()
+	if closest.dialogue_state then 
+		start_convo(closest)
+	end
+
 	if btnp(🅾️) then
 		_upd = u_walking_around
 		_drw = d_walking_around
 	end
-
-	start_convo(closest)
 end
 
 

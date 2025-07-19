@@ -29,9 +29,9 @@ function _init()
 	npc_names = {"joe", "bob", "mary", "jane"}
 	npc_colors = {3, 4, 5, 6, 7, 8, 9, 10}
 	npc_messages = {
-		"party at my iggy!",
-		"we just need one more penguin to tip the iceberg!",
-		"you have been banned from club penguin"
+		"cool meeting you. party at my iggy!",
+		"so anyways, we need more penguins to tip the iceberg",
+		"ok well... you've been banned from club penguin"
 	}
 
 	for i = 1, npc_count do

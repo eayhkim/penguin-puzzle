@@ -35,7 +35,11 @@ function d_dialogue()
  
  	draw_textbox(closest)
 	draw_big_penguin(closest)
-	
+
+	if closest.dialogue_state then 
+		draw_choices(closest)
+	end 
+
 	print("🅾️ to exit", 85, 2 + ui_offset, 7)
 end
 
@@ -157,8 +161,37 @@ function draw_textbox(peng)
 
 	-- draw_center_txt_rect(peng.message, 66, 26, 114, 84, 1)
 
-	draw_center_txt_rect(peng.dialogue_state.curr.text, 66, 26, 114, 84, 1)
+	if peng.dialogue_state then 
+		draw_center_txt_rect(peng.dialogue_state.curr.text, 66, 26, 114, 84, 1)
+	else 
+		draw_center_txt_rect(peng.message, 66, 26, 114, 84, 1)
+	end
 end	
+
+
+function draw_choices(peng)
+	local responses = peng.dialogue_state.curr.responses
+    local selected_index = peng.dialogue_state.selected_idx or 1
+
+    local start_y = 92  -- just below main box
+    local pad = 4
+
+    for i, resp in ipairs(responses) do
+        local y = start_y + (i - 1) * 12
+        local x0, y0 = 60, y
+        local x1, y1 = 118, y + 10
+
+        -- highlight selected response
+        if i == selected_index then
+            rectfill(x0, y0, x1, y1, 8) 
+            print(">", x0 - 6, y0 + 2, 8)  -- cursor arrow before text
+            print(resp.text, x0 + pad, y0 + 2, 7) 
+        else
+            rectfill(x0, y0, x1, y1, 6) 
+            print(resp.text, x0 + pad, y0 + 2, 5) 
+        end
+    end
+end
 
 
 function draw_big_penguin(peng)

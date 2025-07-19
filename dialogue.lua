@@ -1,6 +1,6 @@
 -->8
--- >>> dialogues.lua <<<
--- npc dialogues --
+-- >>> dialogue.lua <<<
+-- npc dialogue --
 npc_dialogues = {
     greetings = {
         {
@@ -66,27 +66,28 @@ npc_dialogues = {
 
 
 function start_convo(peng)
-    get_response(peng)
-
     local d = peng.dialogue_state
 
-    if d.selected_idx then
-        -- reset to avoid repeating on next advance
-        d.selected_idx = nil
-        d.next = nil
-
-        if d.stage == "greeting" and d.next == "get_quest" then 
-            d.stage = "quest"
-            d.curr = rnd(npc_dialogues.quests)
-
-        elseif d.next == "end" then
-            peng.dialogue_state = nil
-
-        else -- on quest stage
-            d.stage = "end"
-            -- trigger_quest(n, peng) 
-        end
+    if not d.next then
+        get_response(peng)
+        return
     end
+
+    if d.stage == "greeting" and d.next == "get_quest" then 
+        d.stage = "quest"
+        d.curr = rnd(npc_dialogues.quests)
+
+    elseif d.next == "end" then
+        peng.dialogue_state = nil
+
+    else -- on quest stage
+        d.stage = "end"
+        -- trigger_quest(n, peng) 
+    end
+
+    -- reset to avoid repeating on next advance
+    d.selected_idx = nil
+    d.next = nil
 end
 
 
