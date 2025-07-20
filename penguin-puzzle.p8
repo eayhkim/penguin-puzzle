@@ -289,26 +289,40 @@ function draw_textbox(peng)
 end	
 
 
+function max_resp_len(responses)
+    local max_len = 0
+    for resp in all(responses) do
+        max_len = max(max_len, #resp.text)
+    end
+    return max_len * 4 + 8  -- 4px per char + padding
+end
+
+
 function draw_choices(peng)
 	local responses = peng.dialogue_state.curr.responses
     local selected_index = peng.dialogue_state.selected_idx or 1
 
-    local start_y = 92  -- just below main box
-    local pad = 4
+    local pad = 8
+    local box_h = 12
+    local total_h = #responses * box_h
+    local start_y = 128 - total_h 
+
+    local box_w = max_resp_len(responses)
+    local x0 = 0
+    local x1 = x0 + box_w + 2
 
     for i, resp in ipairs(responses) do
-        local y = start_y + (i - 1) * 12
-        local x0, y0 = 60, y
-        local x1, y1 = 118, y + 10
+        local y = start_y + (i - 1) * box_h
+        local y0 = y
+        local y1 = y + box_h - 2
 
-        -- highlight selected response
         if i == selected_index then
-            rectfill(x0, y0, x1, y1, 8) 
-            print(">", x0 - 6, y0 + 2, 8)  -- cursor arrow before text
-            print(resp.text, x0 + pad, y0 + 2, 7) 
+            rectfill(x0, y0, x1, y1, 8)
+            print(">", x0 + 2, y0 + 3, 7) -- print cursor for selected
+            print(resp.text, x0 + pad, y0 + 3, 7)
         else
-            rectfill(x0, y0, x1, y1, 6) 
-            print(resp.text, x0 + pad, y0 + 2, 5) 
+            rectfill(x0, y0, x1, y1, 6)
+            print(resp.text, x0 + pad, y0 + 3, 5)
         end
     end
 end
