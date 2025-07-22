@@ -152,16 +152,18 @@ function snowball_move()
 			snowball.y = p.y + 2
 		else 
 			snowball.x += snowball.dx
-			snowball.dy += snowball.dy
+			snowball.y += snowball.dy
 
 			snowball.dx *= 0.95
-			snowball.dy *= 0.95
 			-- friction/gravity applies over time
 			if abs(snowball.dx) < 0.2 then
 				snowball.dx = 0
-			end
-			if abs(snowball.dy) < 0.2 then
 				snowball.dy = 0
+			else
+				snowball.dy += 0.2
+				if snowball.dy >=  0.5 then
+					snowball.dy = 0
+				end
 			end
 		end
 	end

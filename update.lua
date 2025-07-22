@@ -40,11 +40,11 @@ function u_snowball_throw()
 
 	if btnp(🅾️) then
 		if p.face_right then
-			p.held_item.dx = 2
+			p.held_item.dx = rnd(2.5) + 0.5
 		else
-			p.held_item.dx = - 2
+			p.held_item.dx = - rnd(2.5) - 0.5
 		end
-		p.held_item.dy = -1
+		p.held_item.dy = - rnd(1)
 		p.held_item.state = "floor"
 		_upd = u_walking_around
 	end
