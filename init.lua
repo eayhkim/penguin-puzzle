@@ -18,6 +18,7 @@ function _init()
 		anim_timer = 0,
 		anim_speed = 8,
 		state = "still",
+		held_item = "none",
 		face_right = false,
 		speed = 2
 	}
@@ -53,6 +54,17 @@ function _init()
 			sprite = 17, flip = false
 		}
 	}
+
+	snowballs = {}
+	snowball_count = 1
+	create_snowball(60,60)
+	-- for i = 0, snowball_count do
+	-- 	if i % 3 == 0 then
+	-- 		create_snowball(rnd(80) - 30, rnd(80)-30)
+	-- 	else
+	-- 		create_snowball(prev_snowball[1] + 10, prev_snowball[2] + 10)
+	-- 	end
+	-- end
 
 	statex = "walking"
 	closest = npcs[0]
@@ -100,7 +112,16 @@ function create_npc(id,sprite,name,x,y)
 	add(npcs, npc)
 end
 
-
+function create_snowball(x,y)
+	local snowball = {
+		x = x,
+		y = y,
+		dx = 0,
+		dy = 0,
+		state = "floor"
+	}
+	add(snowballs, snowball)
+end
 function _update()
 	_upd()
 end

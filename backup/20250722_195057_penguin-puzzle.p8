@@ -132,7 +132,7 @@ function d_walking_around()
 	cls()
 	map()
 	draw_penguins()
- draw_sharks()
+ 	draw_sharks()
 	draw_snowballs()
 
 	if closest != "none" then
@@ -338,8 +338,8 @@ function draw_big_penguin(peng)
 end
 
 function draw_snowballs()
-	for i = 1, snowball_count do
-		spr(37,snowballs[i].x, snowballs[i].y)
+	for i = 0, snowball_count do
+		spr(37, snowballs[i].x, snowballs[i].y)
 	end
 end
 
@@ -364,7 +364,6 @@ function _init()
 		anim_timer = 0,
 		anim_speed = 8,
 		state = "still",
-		held_item = "none",
 		face_right = false,
 		speed = 2
 	}
@@ -402,15 +401,10 @@ function _init()
 	}
 
 	snowballs = {}
-	snowball_count = 1
-	create_snowball(60,60)
-	-- for i = 0, snowball_count do
-	-- 	if i % 3 == 0 then
-	-- 		create_snowball(rnd(80) - 30, rnd(80)-30)
-	-- 	else
-	-- 		create_snowball(prev_snowball[1] + 10, prev_snowball[2] + 10)
-	-- 	end
-	-- end
+	snowball_count = 8
+	for i = 0, snowball_count do
+		create_snowball()
+	end
 
 	statex = "walking"
 	closest = npcs[0]
@@ -458,13 +452,12 @@ function create_npc(id,sprite,name,x,y)
 	add(npcs, npc)
 end
 
-function create_snowball(x,y)
+function create_snowball()
 	local snowball = {
-		x = x,
-		y = y,
+		x = rnd(100),
+		y = rnd(100),
 		dx = 0,
-		dy = 0,
-		state = "floor"
+		dy = 0
 	}
 	add(snowballs, snowball)
 end
@@ -511,9 +504,8 @@ function random_water_position()
 end
 
 
-function get_nearest_interactable()
+function get_nearest_npc()
 	local min_dist = 32000
-	local closest_type = ""
 
 	for i = 1, npc_count do 
 		curr_dist = dst(p, npcs[i])
@@ -521,24 +513,14 @@ function get_nearest_interactable()
 
 		if min_dist == curr_dist do 
 			closest = npcs[i]
-			closest_type = "npc"
 		end
 	end
-	for i = 1, snowball_count do
-		curr_dist = dst(p, snowballs[i])
-		min_dist = min(min_dist, curr_dist)
 
-		if min_dist == curr_dist do 
-			closest = snowballs[i]
-			closest_type = "snowball"
-		end
-	end
 	if min_dist > talk_range then
 		closest = "none"
-		closest_type = ""
 	end
 
-	return {closest, closest_type}
+	return closest
 end
 
 
@@ -625,28 +607,6 @@ function sharks_move()
     end
 end
 
-function snowball_move()
-	for snowball in all(snowballs) do
-		if snowball.state == "held" then
-			snowball.x = p.x + 4
-			snowball.y = p.y + 2
-		else 
-			snowball.x += snowball.dx
-			snowball.dy += snowball.dy
-
-			snowball.dx *= 0.95
-			snowball.dy *= 0.95
-			-- friction/gravity applies over time
-			if abs(snowball.dx) < 0.2 then
-				snowball.dx = 0
-			end
-			if abs(snowball.dy) < 0.2 then
-				snowball.dy = 0
-			end
-		end
-	end
-end
-
 
 -->8
 -- >>> update.lua <<<
@@ -655,22 +615,13 @@ function u_walking_around()
 	p_move()
 	npcs_move()
 	sharks_move()
-	snowball_move()
 
-	nearest_search = get_nearest_interactable()
-	closest = nearest_search[1]
-	closest_type = nearest_search[2]
+	closest = get_nearest_npc()
 	if closest != "none" then
 		if btnp(🅾️) then
-			if closest_type == "npc" then
-				state = "talking"
-				_upd = u_dialogue
-				_drw = d_dialogue
-			elseif closest_type == "snowball" then
-				closest.state = "held"
-				_upd = u_snowball_throw
-				p.held_item = closest
-			end
+			state = "talking"
+			_upd = u_dialogue
+			_drw = d_dialogue
 		end
 	end
 
@@ -682,23 +633,6 @@ function u_walking_around()
 	end
 end
 
-function u_snowball_throw()
-	p_move()
-	npcs_move()
-	sharks_move()
-	snowball_move()
-
-	if btnp(🅾️) then
-		if p.face_right then
-			p.held_item.dx = 2
-		else
-			p.held_item.dx = - 2
-		end
-		p.held_item.dy = -1
-		p.held_item.state = "floor"
-		_upd = u_walking_around
-	end
-end
 
 function u_dialogue()
 	if closest.dialogue_state then 
@@ -801,14 +735,14 @@ __gfx__
 00000000ff6d111f00000000fe77777ef3777773fb77777b11777771cc77777caa77777a5577777544777774000000000000000077777766cc77766c77777777
 00000000f1d1111100000000fe7777eef3777733fb7777bbf177771ffc7777cffa7777aff577775ff477774f000000000000000066666666c66666cc77777677
 00000000cc1111cc00000000ff99f99fff99f99fff99f99fff99f99fff99f99fff99f99fff99f99fff99f99f000000000000000066666666cccccccc77777777
-00000000ccccccccfccccccfffffffffffffffffffffffff0000000000000000000000000000000000000000666666661c11111111111111cccccccc77777777
-0000000000000000c777776cfcccccfff66666ffff666fff000000000000000000000000000000000000000066677676111111c111111177c677cccc77777777
-0000000000000000c77cc66ccc777ccf6611166ff66776ff0000000000000000000000000000000000000000767767771111111111117777c6666ccc77777777
-0000000000000000c7c77c6ccc7c7ccf6616166ff66776ff0000000000000000000000000000000000000000776767671111c11111777777cccccccc76777777
-0000000000000000c7c76c6ccc777ccf6611166ff66666ff000000000000000000000000000000000000000067777766c111111117777777cc777ccc77777767
-0000000000000000c76cc66c1ccccc1f5666665ffd666dff0000000000000000000000000000000000000000666665661111111117777777c666677c67776777
-0000000000000000c666666cf11111fff55555ffffdddfff0000000000000000000000000000000000000000565666661c1c111c77777666cccc666c76767676
-0000000000000000fccccccfffffffffffffffffffffffff000000000000000000000000000000000000000055555555c111c1c166666666cccccccc66666666
+00000000ccccccccfccccccfffffffffffffffff000000000000000000000000000000000000000000000000666666661c11111111111111cccccccc77777777
+0000000000000000c777776cfcccccfff66666ff00000000000000000000000000000000000000000000000066677676111111c111111177c677cccc77777777
+0000000000000000c77cc66ccc777ccf6611166f066600000000000000000000000000000000000000000000767767771111111111117777c6666ccc77777777
+0000000000000000c7c77c6ccc7c7ccf6616166f667760000000000000000000000000000000000000000000776767671111c11111777777cccccccc76777777
+0000000000000000c7c76c6ccc777ccf6611166f66776000000000000000000000000000000000000000000067777766c111111117777777cc777ccc77777767
+0000000000000000c76cc66c1ccccc1f5666665f666660000000000000000000000000000000000000000000666665661111111117777777c666677c67776777
+0000000000000000c666666cf11111fff55555ffd666d0000000000000000000000000000000000000000000565666661c1c111c77777666cccc666c76767676
+0000000000000000fccccccfffffffffffffffff0ddd0000000000000000000000000000000000000000000055555555c111c1c166666666cccccccc66666666
 0000000000000000000000000000000000000000000000000000000000000000000000000000000077777777777777777777777711111111cccccccc77777777
 0000000000000000000000000000000000000000000000000000000000000000000000000000000077766767777667677776676711111111cccccccc77777777
 0000000000000000000000000000000000000000000000000000000000000000000000000000000067667665676676666766766611111111cccccccc77777777

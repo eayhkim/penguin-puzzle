@@ -31,8 +31,9 @@ function random_water_position()
 end
 
 
-function get_nearest_npc()
+function get_nearest_interactable()
 	local min_dist = 32000
+	local closest_type = ""
 
 	for i = 1, npc_count do 
 		curr_dist = dst(p, npcs[i])
@@ -40,14 +41,24 @@ function get_nearest_npc()
 
 		if min_dist == curr_dist do 
 			closest = npcs[i]
+			closest_type = "npc"
 		end
 	end
+	for i = 1, snowball_count do
+		curr_dist = dst(p, snowballs[i])
+		min_dist = min(min_dist, curr_dist)
 
+		if min_dist == curr_dist do 
+			closest = snowballs[i]
+			closest_type = "snowball"
+		end
+	end
 	if min_dist > talk_range then
 		closest = "none"
+		closest_type = ""
 	end
 
-	return closest
+	return {closest, closest_type}
 end
 
 
@@ -132,4 +143,26 @@ function sharks_move()
             end
         end
     end
+end
+
+function snowball_move()
+	for snowball in all(snowballs) do
+		if snowball.state == "held" then
+			snowball.x = p.x + 4
+			snowball.y = p.y + 2
+		else 
+			snowball.x += snowball.dx
+			snowball.dy += snowball.dy
+
+			snowball.dx *= 0.95
+			snowball.dy *= 0.95
+			-- friction/gravity applies over time
+			if abs(snowball.dx) < 0.2 then
+				snowball.dx = 0
+			end
+			if abs(snowball.dy) < 0.2 then
+				snowball.dy = 0
+			end
+		end
+	end
 end

@@ -12,7 +12,8 @@ function d_walking_around()
 	cls()
 	map()
 	draw_penguins()
- 	draw_sharks()
+ draw_sharks()
+	draw_snowballs()
 
 	if closest != "none" then
 		draw_talk_hint()
@@ -32,6 +33,7 @@ function d_dialogue()
 	map()
 	draw_penguins()
  	draw_sharks()
+	draw_snowballs()
  
  	draw_textbox(closest)
 	draw_big_penguin(closest)
@@ -213,4 +215,10 @@ function draw_big_penguin(peng)
 	local sx = (peng.spr_frames[1] % 16) * 8
 	local sy = (peng.spr_frames[1] \ 16) * 8	
 	sspr(sx, sy, 8, 8, -10, 60, 96, 96, true, false)
+end
+
+function draw_snowballs()
+	for i = 1, snowball_count do
+		spr(37,snowballs[i].x, snowballs[i].y)
+	end
 end

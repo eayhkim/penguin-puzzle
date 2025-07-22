@@ -5,13 +5,22 @@ function u_walking_around()
 	p_move()
 	npcs_move()
 	sharks_move()
+	snowball_move()
 
-	closest = get_nearest_npc()
+	nearest_search = get_nearest_interactable()
+	closest = nearest_search[1]
+	closest_type = nearest_search[2]
 	if closest != "none" then
 		if btnp(🅾️) then
-			state = "talking"
-			_upd = u_dialogue
-			_drw = d_dialogue
+			if closest_type == "npc" then
+				state = "talking"
+				_upd = u_dialogue
+				_drw = d_dialogue
+			elseif closest_type == "snowball" then
+				closest.state = "held"
+				_upd = u_snowball_throw
+				p.held_item = closest
+			end
 		end
 	end
 
@@ -23,6 +32,23 @@ function u_walking_around()
 	end
 end
 
+function u_snowball_throw()
+	p_move()
+	npcs_move()
+	sharks_move()
+	snowball_move()
+
+	if btnp(🅾️) then
+		if p.face_right then
+			p.held_item.dx = 2
+		else
+			p.held_item.dx = - 2
+		end
+		p.held_item.dy = -1
+		p.held_item.state = "floor"
+		_upd = u_walking_around
+	end
+end
 
 function u_dialogue()
 	if closest.dialogue_state then 
