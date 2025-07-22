@@ -25,6 +25,10 @@ end
 
 
 function u_dialogue()
+	if closest.dialogue_state then 
+		start_convo(closest)
+	end
+
 	if btnp(🅾️) then
 		_upd = u_walking_around
 		_drw = d_walking_around

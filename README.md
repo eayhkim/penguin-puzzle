@@ -14,8 +14,12 @@ This project leverages **[pico8-devbuddy](https://github.com/aadriien/pico8-devb
 
 🍀 Hello, Jane!   |   🌸 Hello, Bob! 
 :-------------------------:|:-------------------------:
-![Jane NPC saying hello](./penguin-hello-jane.png)  |  ![Bob NPC saying hello](./penguin-hello-bob.png) 
+![Jane NPC saying hello](./demos/penguin-hello-jane.png)  |  ![Bob NPC saying hello](./demos/penguin-hello-bob.png) 
 
-![Penguin puzzle game view](./example-view.png) 
+💬 NPC Dialogue   |   🤔 Dialogue Tree
+:-------------------------:|:-------------------------:
+![NPC dialogue default](./demos/penguin-dialogue-default.png)  |  ![NPC dialogue tree](./demos/penguin-dialogue-tree.png) 
+
+![Penguin puzzle game view](./demos/example-view.png) 
 
 

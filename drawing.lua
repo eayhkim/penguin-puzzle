@@ -35,7 +35,11 @@ function d_dialogue()
  
  	draw_textbox(closest)
 	draw_big_penguin(closest)
-	
+
+	if closest.dialogue_state then 
+		draw_choices(closest)
+	end 
+
 	print("🅾️ to exit", 85, 2 + ui_offset, 7)
 end
 
@@ -116,6 +120,22 @@ function screen_shake()
 end
 
 
+-- params: text, rect box coords (x0, y0, x1, y1), color
+function draw_center_txt_rect(t, x0, y0, x1, y1, c)
+    local w = x1 - x0 + 2
+    local h = y1 - y0 + 2
+    local pad = 4  -- pixel padding inside box
+
+    local lines = wrap_txt(t, w - pad*2, h - pad*2)
+    local sy = y0 + pad + (h - pad*2 - #lines * 8) \ 2
+
+    for i, line in ipairs(lines) do
+        local px = x0 + pad + (w - pad*2 - #line * 4) \ 2
+        print(line, px, sy + (i - 1) * 8, c)
+    end
+end
+
+
 function draw_textbox(peng)
 	-- dithering background
 	fillp(▒)
@@ -131,17 +151,61 @@ function draw_textbox(peng)
 	rectfill(0,68, 128, 48,6)
 
 	fillp(⬅️)
-	-- generate rectangle (0 == index of black color)
+	-- generate rectangle
 	rectfill(60, 20, 120, 90, 0)
 	rectfill(62, 22, 118, 88, 7)
 	rectfill(66, 26, 114, 84, 6)
 
-	print(peng.name, 75, 35, 1)
-	print("")
-	print("says") 
-	print("hello!")
-	print(":D")
+	-- local hello_name = peng.name .. " says hello! :D"
+	-- draw_center_txt_rect(hello_name, 66, 26, 114, 84, 1)
+
+	-- draw_center_txt_rect(peng.message, 66, 26, 114, 84, 1)
+
+	if peng.dialogue_state then 
+		draw_center_txt_rect(peng.dialogue_state.curr.text, 66, 26, 114, 84, 1)
+	else 
+		draw_center_txt_rect(peng.message, 66, 26, 114, 84, 1)
+	end
 end	
+
+
+function max_resp_len(responses)
+    local max_len = 0
+    for resp in all(responses) do
+        max_len = max(max_len, #resp.text)
+    end
+    return max_len * 4 + 8  -- 4px per char + padding
+end
+
+
+function draw_choices(peng)
+	local responses = peng.dialogue_state.curr.responses
+    local selected_index = peng.dialogue_state.selected_idx or 1
+
+    local pad = 12
+    local box_h = 12
+    local total_h = #responses * box_h
+    local start_y = 128 - total_h 
+
+    local box_w = max_resp_len(responses)
+    local x0 = 0
+    local x1 = x0 + box_w + 2
+
+    for i, resp in ipairs(responses) do
+        local y = start_y + (i - 1) * box_h
+        local y0 = y + ui_offset
+        local y1 = y + box_h - 2 + ui_offset
+
+        if i == selected_index then
+            rectfill(x0, y0, x1, y1, 8)
+            print("❎", x0 + 2, y0 + 3, 7) -- print cursor for selected
+            print(resp.text, x0 + pad, y0 + 3, 7)
+        else
+            rectfill(x0, y0, x1, y1, 6)
+            print(resp.text, x0 + pad, y0 + 3, 5)
+        end
+    end
+end
 
 
 function draw_big_penguin(peng)

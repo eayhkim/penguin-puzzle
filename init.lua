@@ -23,10 +23,16 @@ function _init()
 	}
 
 	npcs = {}
+	npc_index = 1
 	npc_count = 10
+
 	npc_names = {"joe", "bob", "mary", "jane"}
 	npc_colors = {3, 4, 5, 6, 7, 8, 9, 10}
-	npc_index = 1
+	npc_messages = {
+		"cool meeting you. party at my iggy!",
+		"so anyways, we need more penguins to tip the iceberg",
+		"ok well... you've been banned from club penguin"
+	}
 
 	for i = 1, npc_count do
 		create_npc(i, rnd(npc_colors), rnd(npc_names), 16 + rnd(80), 35 + 4 * i)
@@ -80,6 +86,14 @@ function create_npc(id,sprite,name,x,y)
 		dy = 1,
 		target_x = 25, 
 		target_y = 50,
+		message = rnd(npc_messages),
+		dialogue_state = {
+			stage = "greeting",
+			curr = rnd(npc_dialogues.greetings),
+			selected_idx = nil,
+			next = nil
+		},
+		quest_state = nil,
 		is_unlocked = false
 	}
 
