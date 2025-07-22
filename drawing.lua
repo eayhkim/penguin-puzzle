@@ -182,7 +182,7 @@ function draw_choices(peng)
 	local responses = peng.dialogue_state.curr.responses
     local selected_index = peng.dialogue_state.selected_idx or 1
 
-    local pad = 8
+    local pad = 12
     local box_h = 12
     local total_h = #responses * box_h
     local start_y = 128 - total_h 
@@ -193,12 +193,12 @@ function draw_choices(peng)
 
     for i, resp in ipairs(responses) do
         local y = start_y + (i - 1) * box_h
-        local y0 = y
-        local y1 = y + box_h - 2
+        local y0 = y + ui_offset
+        local y1 = y + box_h - 2 + ui_offset
 
         if i == selected_index then
             rectfill(x0, y0, x1, y1, 8)
-            print(">", x0 + 2, y0 + 3, 7) -- print cursor for selected
+            print("❎", x0 + 2, y0 + 3, 7) -- print cursor for selected
             print(resp.text, x0 + pad, y0 + 3, 7)
         else
             rectfill(x0, y0, x1, y1, 6)

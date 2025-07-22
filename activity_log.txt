@@ -1,0 +1,15 @@
+rrrr_________r
+2025-07-22 18:34:10 c:/Users/kimae/Projects/penguin-puzzle/penguin-puzzle.p8
+ 
+2025-07-22 18:37:21 c:/Users/kimae/Projects/penguin-puzzle/penguin-puzzle.p8
+ rrrrc.........rrrrrrrrrrrrrrr_________
+2025-07-22 18:38:34 c:/Users/kimae/Projects/penguin-puzzle/drawing.lua
+ ri
+2025-07-22 18:38:49 c:/Users/kimae/Projects/penguin-puzzle/penguin-puzzle.p8
+ rrc
+2025-07-22 18:39:13 c:/Users/kimae/Projects/penguin-puzzle/penguin-puzzle.p8
+ rrr
+2025-07-22 18:39:34 c:/Users/kimae/Projects/penguin-puzzle/penguin-puzzle.p8
+ 
+2025-07-22 18:40:31 c:/Users/kimae/Projects/penguin-puzzle/penguin-puzzle.p8
+ rrrr_rrrr_____rr_r_________r
