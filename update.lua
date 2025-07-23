@@ -28,6 +28,8 @@ function u_walking_around()
 		npcs[npc_index].is_unlocked = true
 		npcs[npc_index].state = "move"
 		npc_index += 1
+		npcs[npc_index].dx = 2
+		npcs[npc_index].dy = 2
 		trigger_shake()
 	end
 end
@@ -45,7 +47,7 @@ function u_snowball_throw()
 			p.held_item.dx = - rnd(2.5) - 0.5
 		end
 		p.held_item.dy = - rnd(1)
-		p.held_item.state = "floor"
+		p.held_item.state = "throw"
 		_upd = u_walking_around
 	end
 end

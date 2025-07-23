@@ -338,8 +338,21 @@ function draw_big_penguin(peng)
 end
 
 function draw_snowballs()
-	for i = 1, snowball_count do
-		spr(37,snowballs[i].x, snowballs[i].y)
+	for snowball in all(snowballs) do
+		if snowball.state != "splat" then
+			spr(snowball.anim_frames[1], snowball.x, snowball.y)
+		else
+			spr(snowball.anim_frames[snowball.anim_index], snowball.x, snowball.y)
+			-- increment animation frames
+			snowball.anim_timer += 1
+			if snowball.anim_timer >= snowball.anim_speed then
+				snowball.anim_index += 1
+				snowball.anim_timer = 0
+				if snowball.anim_index > #snowball.anim_frames then
+					del(snowballs,snowball)
+				end
+			end
+		end
 	end
 end
 
@@ -402,8 +415,10 @@ function _init()
 	}
 
 	snowballs = {}
-	snowball_count = 1
+	snowball_count = 2
 	create_snowball(60,60)
+	create_snowball(70,70)
+	create_snowball(65,67)
 	-- for i = 0, snowball_count do
 	-- 	if i % 3 == 0 then
 	-- 		create_snowball(rnd(80) - 30, rnd(80)-30)
@@ -440,8 +455,10 @@ function create_npc(id,sprite,name,x,y)
 		name = name,
 		x = x,
 		y = y,
-		dx = 1,
-		dy = 1,
+		dx = 0,
+		dy = 0,
+		pushx = 0,
+		pushy = 0,
 		target_x = 25, 
 		target_y = 50,
 		message = rnd(npc_messages),
@@ -464,8 +481,12 @@ function create_snowball(x,y)
 		y = y,
 		dx = 0,
 		dy = 0,
-		state = "floor"
-	}
+		state = "floor",
+		anim_frames = {37,38,39,40,41,42},
+		anim_index = 1,
+		anim_speed = 6,
+		anim_timer = 0
+		}
 	add(snowballs, snowball)
 end
 function _update()
@@ -524,12 +545,12 @@ function get_nearest_interactable()
 			closest_type = "npc"
 		end
 	end
-	for i = 1, snowball_count do
-		curr_dist = dst(p, snowballs[i])
+	for snowball in all(snowballs) do
+		curr_dist = dst(p,snowball)
 		min_dist = min(min_dist, curr_dist)
 
 		if min_dist == curr_dist do 
-			closest = snowballs[i]
+			closest = snowball
 			closest_type = "snowball"
 		end
 	end
@@ -590,7 +611,21 @@ function npcs_move()
 			if npcs[i].y > npcs[i].target_y then 
 				npcs[i].y -= npcs[i].dy
 			end	
+		else
+			npcs[i].x += npcs[i].dx
+			npcs[i].y += npcs[i].dy
+
+			npcs[i].dx *= 0.90
+			npcs[i].dy *= 0.90
+			-- friction/gravity applies over time
+			if abs(npcs[i].dx) < 0.05 then
+				npcs[i].dx = 0
+			end
+			if abs(npcs[i].dy) < 0.05 then
+				npcs[i].dy = 0
+			end
 		end
+		
 	end
 end
 
@@ -630,21 +665,35 @@ function snowball_move()
 		if snowball.state == "held" then
 			snowball.x = p.x + 4
 			snowball.y = p.y + 2
-		else 
-			snowball.x += snowball.dx
-			snowball.y += snowball.dy
+		elseif snowball.state == "throw" then
+			snowball.x = snowball.x + snowball.dx
+			snowball.y = snowball.y + snowball.dy
 
-			snowball.dx *= 0.95
-			-- friction/gravity applies over time
-			if abs(snowball.dx) < 0.2 then
-				snowball.dx = 0
-				snowball.dy = 0
-			else
-				snowball.dy += 0.2
-				if snowball.dy >=  0.5 then
-					snowball.dy = 0
+			for penguin in all(npcs) do
+				if (snowball.x - penguin.x) <= 6 and abs(snowball.y - penguin.y) <= 2 then
+					snowball.state = "splat"
+					penguin.dx = snowball.dx * .80
+					penguin.dy = snowball.dy * .80
+					snowball.target = penguin
 				end
 			end
+			if snowball.state != "splat" then
+				snowball.dx *= 0.95
+				-- friction/gravity applies over time
+				if abs(snowball.dx) < 0.2 then
+					snowball.dx = 0
+					snowball.dy = 0
+					snowball.state = "floor"
+				else
+					snowball.dy += 0.2
+					if snowball.dy >=  0.5 then
+						snowball.dy = 0
+					end
+				end
+			end
+		elseif snowball.state == "splat" then
+			snowball.x = snowball.target.x + 6
+			snowball.y = snowball.target.y
 		end
 	end
 end
@@ -680,6 +729,8 @@ function u_walking_around()
 		npcs[npc_index].is_unlocked = true
 		npcs[npc_index].state = "move"
 		npc_index += 1
+		npcs[npc_index].dx = 2
+		npcs[npc_index].dy = 2
 		trigger_shake()
 	end
 end
@@ -697,7 +748,7 @@ function u_snowball_throw()
 			p.held_item.dx = - rnd(2.5) - 0.5
 		end
 		p.held_item.dy = - rnd(1)
-		p.held_item.state = "floor"
+		p.held_item.state = "throw"
 		_upd = u_walking_around
 	end
 end
@@ -803,14 +854,14 @@ __gfx__
 00000000ff6d111f00000000fe77777ef3777773fb77777b11777771cc77777caa77777a5577777544777774000000000000000077777766cc77766c77777777
 00000000f1d1111100000000fe7777eef3777733fb7777bbf177771ffc7777cffa7777aff577775ff477774f000000000000000066666666c66666cc77777677
 00000000cc1111cc00000000ff99f99fff99f99fff99f99fff99f99fff99f99fff99f99fff99f99fff99f99f000000000000000066666666cccccccc77777777
-00000000ccccccccfccccccfffffffffffffffffffffffff0000000000000000000000000000000000000000666666661c11111111111111cccccccc77777777
-0000000000000000c777776cfcccccfff66666ffff666fff000000000000000000000000000000000000000066677676111111c111111177c677cccc77777777
-0000000000000000c77cc66ccc777ccf6611166ff66776ff0000000000000000000000000000000000000000767767771111111111117777c6666ccc77777777
-0000000000000000c7c77c6ccc7c7ccf6616166ff66776ff0000000000000000000000000000000000000000776767671111c11111777777cccccccc76777777
-0000000000000000c7c76c6ccc777ccf6611166ff66666ff000000000000000000000000000000000000000067777766c111111117777777cc777ccc77777767
-0000000000000000c76cc66c1ccccc1f5666665ffd666dff0000000000000000000000000000000000000000666665661111111117777777c666677c67776777
-0000000000000000c666666cf11111fff55555ffffdddfff0000000000000000000000000000000000000000565666661c1c111c77777666cccc666c76767676
-0000000000000000fccccccfffffffffffffffffffffffff000000000000000000000000000000000000000055555555c111c1c166666666cccccccc66666666
+00000000ccccccccfccccccfffffffffffffffffffffffff6fffffff66ffffffffffffffffffffffffffffff666666661c11111111111111cccccccc77777777
+0000000000000000c777776cfcccccfff66666ffff666fff6666ffff6666ffff666fffff6fffffffffffffff66677676111111c111111177c677cccc77777777
+0000000000000000c77cc66ccc777ccf6611166ff66776ff66776fff66776fff6676ffff66ffffff6fffffff767767771111111111117777c6666ccc77777777
+0000000000000000c7c77c6ccc7c7ccf6616166ff66776ff66776fff66776fff66776fff676fffff66ffffff776767671111c11111777777cccccccc76777777
+0000000000000000c7c76c6ccc777ccf6611166ff66666ff66666fff66766fff66766fff6776ffff776fffff67777766c111111117777777cc777ccc77777767
+0000000000000000c76cc66c1ccccc1f5666665ffd666dff6666dfff6666dfff6666dfff6666ffff676fffff666665661111111117777777c666677c67776777
+0000000000000000c666666cf11111fff55555ffffdddfff6dddffffd6ddffffd66dffff666dffff666fffff565666661c1c111c77777666cccc666c76767676
+0000000000000000fccccccfffffffffffffffffffffffffdfffffffddffffffdddfffffdddfffffd66fffff55555555c111c1c166666666cccccccc66666666
 0000000000000000000000000000000000000000000000000000000000000000000000000000000077777777777777777777777711111111cccccccc77777777
 0000000000000000000000000000000000000000000000000000000000000000000000000000000077766767777667677776676711111111cccccccc77777777
 0000000000000000000000000000000000000000000000000000000000000000000000000000000067667665676676666766766611111111cccccccc77777777

@@ -44,12 +44,12 @@ function get_nearest_interactable()
 			closest_type = "npc"
 		end
 	end
-	for i = 1, snowball_count do
-		curr_dist = dst(p, snowballs[i])
+	for snowball in all(snowballs) do
+		curr_dist = dst(p,snowball)
 		min_dist = min(min_dist, curr_dist)
 
 		if min_dist == curr_dist do 
-			closest = snowballs[i]
+			closest = snowball
 			closest_type = "snowball"
 		end
 	end
@@ -110,7 +110,21 @@ function npcs_move()
 			if npcs[i].y > npcs[i].target_y then 
 				npcs[i].y -= npcs[i].dy
 			end	
+		else
+			npcs[i].x += npcs[i].dx
+			npcs[i].y += npcs[i].dy
+
+			npcs[i].dx *= 0.90
+			npcs[i].dy *= 0.90
+			-- friction/gravity applies over time
+			if abs(npcs[i].dx) < 0.05 then
+				npcs[i].dx = 0
+			end
+			if abs(npcs[i].dy) < 0.05 then
+				npcs[i].dy = 0
+			end
 		end
+		
 	end
 end
 
@@ -150,21 +164,35 @@ function snowball_move()
 		if snowball.state == "held" then
 			snowball.x = p.x + 4
 			snowball.y = p.y + 2
-		else 
-			snowball.x += snowball.dx
-			snowball.y += snowball.dy
+		elseif snowball.state == "throw" then
+			snowball.x = snowball.x + snowball.dx
+			snowball.y = snowball.y + snowball.dy
 
-			snowball.dx *= 0.95
-			-- friction/gravity applies over time
-			if abs(snowball.dx) < 0.2 then
-				snowball.dx = 0
-				snowball.dy = 0
-			else
-				snowball.dy += 0.2
-				if snowball.dy >=  0.5 then
-					snowball.dy = 0
+			for penguin in all(npcs) do
+				if (snowball.x - penguin.x) <= 6 and abs(snowball.y - penguin.y) <= 2 then
+					snowball.state = "splat"
+					penguin.dx = snowball.dx * .80
+					penguin.dy = snowball.dy * .80
+					snowball.target = penguin
 				end
 			end
+			if snowball.state != "splat" then
+				snowball.dx *= 0.95
+				-- friction/gravity applies over time
+				if abs(snowball.dx) < 0.2 then
+					snowball.dx = 0
+					snowball.dy = 0
+					snowball.state = "floor"
+				else
+					snowball.dy += 0.2
+					if snowball.dy >=  0.5 then
+						snowball.dy = 0
+					end
+				end
+			end
+		elseif snowball.state == "splat" then
+			snowball.x = snowball.target.x + 6
+			snowball.y = snowball.target.y
 		end
 	end
 end

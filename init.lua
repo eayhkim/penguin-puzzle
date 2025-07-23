@@ -56,8 +56,10 @@ function _init()
 	}
 
 	snowballs = {}
-	snowball_count = 1
+	snowball_count = 2
 	create_snowball(60,60)
+	create_snowball(70,70)
+	create_snowball(65,67)
 	-- for i = 0, snowball_count do
 	-- 	if i % 3 == 0 then
 	-- 		create_snowball(rnd(80) - 30, rnd(80)-30)
@@ -94,8 +96,10 @@ function create_npc(id,sprite,name,x,y)
 		name = name,
 		x = x,
 		y = y,
-		dx = 1,
-		dy = 1,
+		dx = 0,
+		dy = 0,
+		pushx = 0,
+		pushy = 0,
 		target_x = 25, 
 		target_y = 50,
 		message = rnd(npc_messages),
@@ -118,8 +122,12 @@ function create_snowball(x,y)
 		y = y,
 		dx = 0,
 		dy = 0,
-		state = "floor"
-	}
+		state = "floor",
+		anim_frames = {37,38,39,40,41,42},
+		anim_index = 1,
+		anim_speed = 6,
+		anim_timer = 0
+		}
 	add(snowballs, snowball)
 end
 function _update()

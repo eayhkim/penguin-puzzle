@@ -218,7 +218,20 @@ function draw_big_penguin(peng)
 end
 
 function draw_snowballs()
-	for i = 1, snowball_count do
-		spr(37,snowballs[i].x, snowballs[i].y)
+	for snowball in all(snowballs) do
+		if snowball.state != "splat" then
+			spr(snowball.anim_frames[1], snowball.x, snowball.y)
+		else
+			spr(snowball.anim_frames[snowball.anim_index], snowball.x, snowball.y)
+			-- increment animation frames
+			snowball.anim_timer += 1
+			if snowball.anim_timer >= snowball.anim_speed then
+				snowball.anim_index += 1
+				snowball.anim_timer = 0
+				if snowball.anim_index > #snowball.anim_frames then
+					del(snowballs,snowball)
+				end
+			end
+		end
 	end
 end
