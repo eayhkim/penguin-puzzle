@@ -124,9 +124,11 @@ function create_snowball(x,y)
 		dy = 0,
 		state = "floor",
 		anim_frames = {37,38,39,40,41,42},
+		splat_right = false,
 		anim_index = 1,
 		anim_speed = 6,
-		anim_timer = 0
+		anim_timer = 0,
+		target = "none"
 		}
 	add(snowballs, snowball)
 end

@@ -164,19 +164,45 @@ function snowball_move()
 		if snowball.state == "held" then
 			snowball.x = p.x + 4
 			snowball.y = p.y + 2
+		elseif snowball.state == "throw" and snowball.target != "none" then
+			local dist_x = snowball.x - snowball.target.x
+			local dist_y = snowball.y - snowball.target.y
+			snowball.x += snowball.dx / 10
+			snowball.y += snowball.dy / 10
+			local hit = false
+			if snowball.dx < 0 and dist_x <= 6 then
+				if abs(dist_y) <= 1 then
+					snowball.state = "splat"
+					snowball.splat_right = false
+					hit = true
+				end
+			end
+			if snowball.dx > 0 and dist_x >= -6 then
+				if abs(dist_y) <= 1 then
+					snowball.state = "splat"
+					snowball.splat_right = true
+					hit = true
+				end
+			end
+			if hit then
+				snowball.state = "splat"
+				snowball.target.dx = snowball.dx * .80
+				snowball.target.dy = snowball.dy * .80
+			end
+
 		elseif snowball.state == "throw" then
 			snowball.x = snowball.x + snowball.dx
 			snowball.y = snowball.y + snowball.dy
 
-			for penguin in all(npcs) do
-				if (snowball.x - penguin.x) <= 6 and abs(snowball.y - penguin.y) <= 2 then
-					snowball.state = "splat"
-					penguin.dx = snowball.dx * .80
-					penguin.dy = snowball.dy * .80
-					snowball.target = penguin
-				end
-			end
-			if snowball.state != "splat" then
+			-- for penguin in all(npcs) do
+			-- 	if (snowball.x - penguin.x) <= 6 and (snowball.x - penguin.x) >= 4 and abs(snowball.y - penguin.y) <= 1 then
+			-- 		snowball.state = "splat"
+			-- 		penguin.dx = snowball.dx * .80
+			-- 		penguin.dy = snowball.dy * .80
+			-- 		snowball.target = penguin
+			-- 	end
+			-- end
+			-- if snowball.state != "splat" then
 				snowball.dx *= 0.95
 				-- friction/gravity applies over time
 				if abs(snowball.dx) < 0.2 then
@@ -184,14 +210,18 @@ function snowball_move()
 					snowball.dy = 0
 					snowball.state = "floor"
 				else
-					snowball.dy += 0.2
+					snowball.dy += 0.08
 					if snowball.dy >=  0.5 then
 						snowball.dy = 0
 					end
 				end
-			end
+			--end
 		elseif snowball.state == "splat" then
-			snowball.x = snowball.target.x + 6
+			if snowball.splat_right then
+				snowball.x = snowball.target.x - 6
+			else
+				snowball.x = snowball.target.x + 6
+			end
 			snowball.y = snowball.target.y
 		end
 	end

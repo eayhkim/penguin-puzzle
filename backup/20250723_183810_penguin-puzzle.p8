@@ -483,7 +483,6 @@ function create_snowball(x,y)
 		dy = 0,
 		state = "floor",
 		anim_frames = {37,38,39,40,41,42},
-		splat_right = false,
 		anim_index = 1,
 		anim_speed = 6,
 		anim_timer = 0,
@@ -667,45 +666,19 @@ function snowball_move()
 		if snowball.state == "held" then
 			snowball.x = p.x + 4
 			snowball.y = p.y + 2
-		elseif snowball.state == "throw" and snowball.target != "none" then
-			local dist_x = snowball.x - snowball.target.x
-			local dist_y = snowball.y - snowball.target.y
-			snowball.x += snowball.dx / 10
-			snowball.y += snowball.dy / 10
-			local hit = false
-			if snowball.dx < 0 and dist_x <= 6 then
-				if abs(dist_y) <= 1 then
-					snowball.state = "splat"
-					snowball.splat_right = false
-					hit = true
-				end
-			end
-			if snowball.dx > 0 and dist_x >= -6 then
-				if abs(dist_y) <= 1 then
-					snowball.state = "splat"
-					snowball.splat_right = true
-					hit = true
-				end
-			end
-			if hit then
-				snowball.state = "splat"
-				snowball.target.dx = snowball.dx * .80
-				snowball.target.dy = snowball.dy * .80
-			end
-
 		elseif snowball.state == "throw" then
 			snowball.x = snowball.x + snowball.dx
 			snowball.y = snowball.y + snowball.dy
 
-			-- for penguin in all(npcs) do
-			-- 	if (snowball.x - penguin.x) <= 6 and (snowball.x - penguin.x) >= 4 and abs(snowball.y - penguin.y) <= 1 then
-			-- 		snowball.state = "splat"
-			-- 		penguin.dx = snowball.dx * .80
-			-- 		penguin.dy = snowball.dy * .80
-			-- 		snowball.target = penguin
-			-- 	end
-			-- end
-			-- if snowball.state != "splat" then
+			for penguin in all(npcs) do
+				if (snowball.x - penguin.x) <= 6 and (snowball.x - penguin.x) >= 4 and abs(snowball.y - penguin.y) <= 1 then
+					snowball.state = "splat"
+					penguin.dx = snowball.dx * .80
+					penguin.dy = snowball.dy * .80
+					snowball.target = penguin
+				end
+			end
+			if snowball.state != "splat" then
 				snowball.dx *= 0.95
 				-- friction/gravity applies over time
 				if abs(snowball.dx) < 0.2 then
@@ -718,13 +691,9 @@ function snowball_move()
 						snowball.dy = 0
 					end
 				end
-			--end
-		elseif snowball.state == "splat" then
-			if snowball.splat_right then
-				snowball.x = snowball.target.x - 6
-			else
-				snowball.x = snowball.target.x + 6
 			end
+		elseif snowball.state == "splat" then
+			snowball.x = snowball.target.x + 6
 			snowball.y = snowball.target.y
 		end
 	end
@@ -779,13 +748,12 @@ function u_snowball_throw()
 		local potential_target = rnd(npcs)
 		if (p.face_right and potential_target.x > p.x) or (not p.face_right and potential_target.x < p.x) then
 			p.held_item.target = potential_target
-			p.held_item.target.state = "walking"
 		end
 		if p.held_item.target != "none" then
-			local x_dist = p.held_item.target.x - p.held_item.x 
+			local x_dist = p.held_item.target.x - p.held_item.x
 			local y_dist = p.held_item.target.y - p.held_item.y
-			p.held_item.dx = x_dist 
-			p.held_item.dy = y_dist
+			p.held_item.dx = (x_dist/ abs(x_dist)) * 2
+			p.held_item.dy = (y_dist / abs(y_dist)) * 2
 			sfx(0)
 		else
 			sfx(1)
@@ -939,5 +907,5 @@ __map__
 3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 __sfx__
-0002000004020050200502005020050200502005020050200602007020090200d0201202013020130200060000600006000060000600006000060000600006000060000600006000060000600006000060000600
-000200000d0200d0200d0200c0200c0200b0200a02008020070200502003020020200202001020010200000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+0002000001020010200202005020080200100001000020000500007000090000d0001200013000130000060000600006000060000600006000060000600006000060000600006000060000600006000060000600
+0002000005020040200202001020000200b0000a00008000070000500003000020000200001000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000

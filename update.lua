@@ -41,10 +41,26 @@ function u_snowball_throw()
 	snowball_move()
 
 	if btnp(🅾️) then
-		if p.face_right then
-			p.held_item.dx = rnd(2.5) + 0.5
+		-- about 50% chance of aiming at specific penguin
+		-- otherwise, throw randomly
+		local potential_target = rnd(npcs)
+		if (p.face_right and potential_target.x > p.x) or (not p.face_right and potential_target.x < p.x) then
+			p.held_item.target = potential_target
+			p.held_item.target.state = "walking"
+		end
+		if p.held_item.target != "none" then
+			local x_dist = p.held_item.target.x - p.held_item.x 
+			local y_dist = p.held_item.target.y - p.held_item.y
+			p.held_item.dx = x_dist 
+			p.held_item.dy = y_dist
+			sfx(0)
 		else
-			p.held_item.dx = - rnd(2.5) - 0.5
+			sfx(1)
+			if p.face_right then
+				p.held_item.dx = rnd(2.5) + 0.5
+			else
+				p.held_item.dx = - rnd(2.5) - 0.5
+			end
 		end
 		p.held_item.dy = - rnd(1)
 		p.held_item.state = "throw"
