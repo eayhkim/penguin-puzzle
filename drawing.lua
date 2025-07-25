@@ -12,12 +12,30 @@ function d_walking_around()
 	cls()
 	map()
 	draw_penguins()
- draw_sharks()
+ 	draw_sharks()
 	draw_snowballs()
 
 	if closest != "none" then
 		draw_talk_hint()
 	end
+end
+
+function d_throw_charging()
+	-- ui animation timer
+	ui_anim_timer += 1
+	if ui_anim_timer >= ui_anim_speed then
+		ui_anim_timer = 0
+		ui_offset = (ui_offset + 1) % 2
+	end
+	
+	cls()
+	map()
+	draw_penguins()
+ 	draw_sharks()
+	draw_snowballs()
+	draw_charge_meter()
+	print(p.charging_power)
+
 end
 
 
@@ -218,20 +236,16 @@ function draw_big_penguin(peng)
 end
 
 function draw_snowballs()
+	spr(37, 82, 47)
+	spr(37, 80, 50)
+	spr(37, 85, 50)
 	for snowball in all(snowballs) do
-		if snowball.state != "splat" then
-			spr(snowball.anim_frames[1], snowball.x, snowball.y)
-		else
-			spr(snowball.anim_frames[snowball.anim_index], snowball.x, snowball.y)
-			-- increment animation frames
-			snowball.anim_timer += 1
-			if snowball.anim_timer >= snowball.anim_speed then
-				snowball.anim_index += 1
-				snowball.anim_timer = 0
-				if snowball.anim_index > #snowball.anim_frames then
-					del(snowballs,snowball)
-				end
-			end
-		end
+		spr(37, snowball.x, snowball.y)
 	end
+end
+
+function draw_charge_meter()
+	rectfill(p.x, p.y + 10, p.x + 8, p.y + 15, 6)
+	local bar_width = flr((p.charging_power / p.charge_max) * 7)
+	rectfill(p.x + 1, p.y + 1 + 10, p.x + bar_width, p.y + 15 - 1, 3)
 end

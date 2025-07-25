@@ -20,7 +20,11 @@ function _init()
 		state = "still",
 		held_item = "none",
 		face_right = false,
-		speed = 2
+		speed = 2,
+		charging_power = 0,
+		charging_increment = 0.5,
+		charge_min = 0.5,
+		charge_max = 10
 	}
 
 	npcs = {}
@@ -56,10 +60,8 @@ function _init()
 	}
 
 	snowballs = {}
-	snowball_count = 2
-	create_snowball(60,60)
-	create_snowball(70,70)
-	create_snowball(65,67)
+	snowball_count = 1
+	create_snowball(80, 50)
 	-- for i = 0, snowball_count do
 	-- 	if i % 3 == 0 then
 	-- 		create_snowball(rnd(80) - 30, rnd(80)-30)
@@ -96,10 +98,8 @@ function create_npc(id,sprite,name,x,y)
 		name = name,
 		x = x,
 		y = y,
-		dx = 0,
-		dy = 0,
-		pushx = 0,
-		pushy = 0,
+		dx = 1,
+		dy = 1,
 		target_x = 25, 
 		target_y = 50,
 		message = rnd(npc_messages),
@@ -122,16 +122,11 @@ function create_snowball(x,y)
 		y = y,
 		dx = 0,
 		dy = 0,
-		state = "floor",
-		anim_frames = {37,38,39,40,41,42},
-		splat_right = false,
-		anim_index = 1,
-		anim_speed = 6,
-		anim_timer = 0,
-		target = "none"
-		}
+		state = "floor"
+	}
 	add(snowballs, snowball)
 end
+
 function _update()
 	_upd()
 end

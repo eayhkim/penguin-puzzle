@@ -45,7 +45,7 @@ function get_nearest_interactable()
 		end
 	end
 	for snowball in all(snowballs) do
-		curr_dist = dst(p,snowball)
+		curr_dist = dst(p, snowball)
 		min_dist = min(min_dist, curr_dist)
 
 		if min_dist == curr_dist do 
@@ -110,21 +110,7 @@ function npcs_move()
 			if npcs[i].y > npcs[i].target_y then 
 				npcs[i].y -= npcs[i].dy
 			end	
-		else
-			npcs[i].x += npcs[i].dx
-			npcs[i].y += npcs[i].dy
-
-			npcs[i].dx *= 0.90
-			npcs[i].dy *= 0.90
-			-- friction/gravity applies over time
-			if abs(npcs[i].dx) < 0.05 then
-				npcs[i].dx = 0
-			end
-			if abs(npcs[i].dy) < 0.05 then
-				npcs[i].dy = 0
-			end
 		end
-		
 	end
 end
 
@@ -164,65 +150,21 @@ function snowball_move()
 		if snowball.state == "held" then
 			snowball.x = p.x + 4
 			snowball.y = p.y + 2
-		elseif snowball.state == "throw" and snowball.target != "none" then
-			local dist_x = snowball.x - snowball.target.x
-			local dist_y = snowball.y - snowball.target.y
-			snowball.x += snowball.dx / 10
-			snowball.y += snowball.dy / 10
-			local hit = false
-			if snowball.dx < 0 and dist_x <= 6 then
-				if abs(dist_y) <= 1 then
-					snowball.state = "splat"
-					snowball.splat_right = false
-					hit = true
-				end
-			end
-			if snowball.dx > 0 and dist_x >= -6 then
-				if abs(dist_y) <= 1 then
-					snowball.state = "splat"
-					snowball.splat_right = true
-					hit = true
-				end
-			end
-			if hit then
-				snowball.state = "splat"
-				snowball.target.dx = snowball.dx * .80
-				snowball.target.dy = snowball.dy * .80
-			end
+		else 
+			snowball.x += snowball.dx
+			snowball.y += snowball.dy
 
-		elseif snowball.state == "throw" then
-			snowball.x = snowball.x + snowball.dx
-			snowball.y = snowball.y + snowball.dy
-
-			-- for penguin in all(npcs) do
-			-- 	if (snowball.x - penguin.x) <= 6 and (snowball.x - penguin.x) >= 4 and abs(snowball.y - penguin.y) <= 1 then
-			-- 		snowball.state = "splat"
-			-- 		penguin.dx = snowball.dx * .80
-			-- 		penguin.dy = snowball.dy * .80
-			-- 		snowball.target = penguin
-			-- 	end
-			-- end
-			-- if snowball.state != "splat" then
-				snowball.dx *= 0.95
-				-- friction/gravity applies over time
-				if abs(snowball.dx) < 0.2 then
-					snowball.dx = 0
-					snowball.dy = 0
-					snowball.state = "floor"
-				else
-					snowball.dy += 0.08
-					if snowball.dy >=  0.5 then
-						snowball.dy = 0
-					end
-				end
-			--end
-		elseif snowball.state == "splat" then
-			if snowball.splat_right then
-				snowball.x = snowball.target.x - 6
+			snowball.dx *= 0.95
+			-- friction/gravity applies over time
+			if abs(snowball.dx) < 0.2 then
+				snowball.dx = 0
+				snowball.dy = 0
 			else
-				snowball.x = snowball.target.x + 6
+				snowball.dy += 0.2
+				if snowball.dy >=  0.5 then
+					snowball.dy = 0
+				end
 			end
-			snowball.y = snowball.target.y
 		end
 	end
 end

@@ -28,8 +28,6 @@ function u_walking_around()
 		npcs[npc_index].is_unlocked = true
 		npcs[npc_index].state = "move"
 		npc_index += 1
-		npcs[npc_index].dx = 2
-		npcs[npc_index].dy = 2
 		trigger_shake()
 	end
 end
@@ -41,31 +39,40 @@ function u_snowball_throw()
 	snowball_move()
 
 	if btnp(🅾️) then
-		-- about 50% chance of aiming at specific penguin
-		-- otherwise, throw randomly
-		local potential_target = rnd(npcs)
-		if (p.face_right and potential_target.x > p.x) or (not p.face_right and potential_target.x < p.x) then
-			p.held_item.target = potential_target
-			p.held_item.target.state = "walking"
-		end
-		if p.held_item.target != "none" then
-			local x_dist = p.held_item.target.x - p.held_item.x 
-			local y_dist = p.held_item.target.y - p.held_item.y
-			p.held_item.dx = x_dist 
-			p.held_item.dy = y_dist
-			sfx(0)
-		else
-			sfx(1)
-			if p.face_right then
-				p.held_item.dx = rnd(2.5) + 0.5
-			else
-				p.held_item.dx = - rnd(2.5) - 0.5
-			end
-		end
-		p.held_item.dy = - rnd(1)
-		p.held_item.state = "throw"
-		_upd = u_walking_around
+		p.held_item.state = "floor"
+		_upd = u_throw_charging
+		_drw = d_throw_charging
 	end
+end
+
+function u_throw_charging()
+	p_move()
+	npcs_move()
+	sharks_move()
+	snowball_move()
+
+	if btn(🅾️) then
+		-- keep charging (update "charge" variable)
+		p.charging_power += p.charging_increment 
+	
+		-- confirm power within bounds, then release snowball
+		p.charging_power = max(p.charging_power, p.charge_min)
+		p.charging_power = min(p.charging_power, p.charge_max)
+	else
+		if p.face_right then
+			p.held_item.dx = p.charging_power
+		else
+			p.held_item.dx = -p.charging_power
+		end
+
+		p.held_item.dy = - rnd(1)
+		p.charging_power = 0
+
+		create_snowball(80, 50)
+		_upd = u_walking_around
+		_drw = d_walking_around
+	end
+
 end
 
 function u_dialogue()

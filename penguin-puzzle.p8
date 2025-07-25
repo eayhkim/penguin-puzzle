@@ -132,12 +132,30 @@ function d_walking_around()
 	cls()
 	map()
 	draw_penguins()
- draw_sharks()
+ 	draw_sharks()
 	draw_snowballs()
 
 	if closest != "none" then
 		draw_talk_hint()
 	end
+end
+
+function d_throw_charging()
+	-- ui animation timer
+	ui_anim_timer += 1
+	if ui_anim_timer >= ui_anim_speed then
+		ui_anim_timer = 0
+		ui_offset = (ui_offset + 1) % 2
+	end
+	
+	cls()
+	map()
+	draw_penguins()
+ 	draw_sharks()
+	draw_snowballs()
+	draw_charge_meter()
+	print(p.charging_power)
+
 end
 
 
@@ -338,22 +356,18 @@ function draw_big_penguin(peng)
 end
 
 function draw_snowballs()
+	spr(37, 82, 47)
+	spr(37, 80, 50)
+	spr(37, 85, 50)
 	for snowball in all(snowballs) do
-		if snowball.state != "splat" then
-			spr(snowball.anim_frames[1], snowball.x, snowball.y)
-		else
-			spr(snowball.anim_frames[snowball.anim_index], snowball.x, snowball.y)
-			-- increment animation frames
-			snowball.anim_timer += 1
-			if snowball.anim_timer >= snowball.anim_speed then
-				snowball.anim_index += 1
-				snowball.anim_timer = 0
-				if snowball.anim_index > #snowball.anim_frames then
-					del(snowballs,snowball)
-				end
-			end
-		end
+		spr(37, snowball.x, snowball.y)
 	end
+end
+
+function draw_charge_meter()
+	rectfill(p.x, p.y + 10, p.x + 8, p.y + 15, 6)
+	local bar_width = flr((p.charging_power / p.charge_max) * 7)
+	rectfill(p.x + 1, p.y + 1 + 10, p.x + bar_width, p.y + 15 - 1, 3)
 end
 
 
@@ -379,7 +393,11 @@ function _init()
 		state = "still",
 		held_item = "none",
 		face_right = false,
-		speed = 2
+		speed = 2,
+		charging_power = 0,
+		charging_increment = 0.5,
+		charge_min = 0.5,
+		charge_max = 10
 	}
 
 	npcs = {}
@@ -415,10 +433,8 @@ function _init()
 	}
 
 	snowballs = {}
-	snowball_count = 2
-	create_snowball(60,60)
-	create_snowball(70,70)
-	create_snowball(65,67)
+	snowball_count = 1
+	create_snowball(80, 50)
 	-- for i = 0, snowball_count do
 	-- 	if i % 3 == 0 then
 	-- 		create_snowball(rnd(80) - 30, rnd(80)-30)
@@ -455,10 +471,8 @@ function create_npc(id,sprite,name,x,y)
 		name = name,
 		x = x,
 		y = y,
-		dx = 0,
-		dy = 0,
-		pushx = 0,
-		pushy = 0,
+		dx = 1,
+		dy = 1,
 		target_x = 25, 
 		target_y = 50,
 		message = rnd(npc_messages),
@@ -481,16 +495,11 @@ function create_snowball(x,y)
 		y = y,
 		dx = 0,
 		dy = 0,
-		state = "floor",
-		anim_frames = {37,38,39,40,41,42},
-		splat_right = false,
-		anim_index = 1,
-		anim_speed = 6,
-		anim_timer = 0,
-		target = "none"
-		}
+		state = "floor"
+	}
 	add(snowballs, snowball)
 end
+
 function _update()
 	_upd()
 end
@@ -548,7 +557,7 @@ function get_nearest_interactable()
 		end
 	end
 	for snowball in all(snowballs) do
-		curr_dist = dst(p,snowball)
+		curr_dist = dst(p, snowball)
 		min_dist = min(min_dist, curr_dist)
 
 		if min_dist == curr_dist do 
@@ -613,21 +622,7 @@ function npcs_move()
 			if npcs[i].y > npcs[i].target_y then 
 				npcs[i].y -= npcs[i].dy
 			end	
-		else
-			npcs[i].x += npcs[i].dx
-			npcs[i].y += npcs[i].dy
-
-			npcs[i].dx *= 0.90
-			npcs[i].dy *= 0.90
-			-- friction/gravity applies over time
-			if abs(npcs[i].dx) < 0.05 then
-				npcs[i].dx = 0
-			end
-			if abs(npcs[i].dy) < 0.05 then
-				npcs[i].dy = 0
-			end
 		end
-		
 	end
 end
 
@@ -667,65 +662,21 @@ function snowball_move()
 		if snowball.state == "held" then
 			snowball.x = p.x + 4
 			snowball.y = p.y + 2
-		elseif snowball.state == "throw" and snowball.target != "none" then
-			local dist_x = snowball.x - snowball.target.x
-			local dist_y = snowball.y - snowball.target.y
-			snowball.x += snowball.dx / 10
-			snowball.y += snowball.dy / 10
-			local hit = false
-			if snowball.dx < 0 and dist_x <= 6 then
-				if abs(dist_y) <= 1 then
-					snowball.state = "splat"
-					snowball.splat_right = false
-					hit = true
-				end
-			end
-			if snowball.dx > 0 and dist_x >= -6 then
-				if abs(dist_y) <= 1 then
-					snowball.state = "splat"
-					snowball.splat_right = true
-					hit = true
-				end
-			end
-			if hit then
-				snowball.state = "splat"
-				snowball.target.dx = snowball.dx * .80
-				snowball.target.dy = snowball.dy * .80
-			end
+		else 
+			snowball.x += snowball.dx
+			snowball.y += snowball.dy
 
-		elseif snowball.state == "throw" then
-			snowball.x = snowball.x + snowball.dx
-			snowball.y = snowball.y + snowball.dy
-
-			-- for penguin in all(npcs) do
-			-- 	if (snowball.x - penguin.x) <= 6 and (snowball.x - penguin.x) >= 4 and abs(snowball.y - penguin.y) <= 1 then
-			-- 		snowball.state = "splat"
-			-- 		penguin.dx = snowball.dx * .80
-			-- 		penguin.dy = snowball.dy * .80
-			-- 		snowball.target = penguin
-			-- 	end
-			-- end
-			-- if snowball.state != "splat" then
-				snowball.dx *= 0.95
-				-- friction/gravity applies over time
-				if abs(snowball.dx) < 0.2 then
-					snowball.dx = 0
-					snowball.dy = 0
-					snowball.state = "floor"
-				else
-					snowball.dy += 0.08
-					if snowball.dy >=  0.5 then
-						snowball.dy = 0
-					end
-				end
-			--end
-		elseif snowball.state == "splat" then
-			if snowball.splat_right then
-				snowball.x = snowball.target.x - 6
+			snowball.dx *= 0.95
+			-- friction/gravity applies over time
+			if abs(snowball.dx) < 0.2 then
+				snowball.dx = 0
+				snowball.dy = 0
 			else
-				snowball.x = snowball.target.x + 6
+				snowball.dy += 0.2
+				if snowball.dy >=  0.5 then
+					snowball.dy = 0
+				end
 			end
-			snowball.y = snowball.target.y
 		end
 	end
 end
@@ -761,8 +712,6 @@ function u_walking_around()
 		npcs[npc_index].is_unlocked = true
 		npcs[npc_index].state = "move"
 		npc_index += 1
-		npcs[npc_index].dx = 2
-		npcs[npc_index].dy = 2
 		trigger_shake()
 	end
 end
@@ -774,31 +723,40 @@ function u_snowball_throw()
 	snowball_move()
 
 	if btnp(🅾️) then
-		-- about 50% chance of aiming at specific penguin
-		-- otherwise, throw randomly
-		local potential_target = rnd(npcs)
-		if (p.face_right and potential_target.x > p.x) or (not p.face_right and potential_target.x < p.x) then
-			p.held_item.target = potential_target
-			p.held_item.target.state = "walking"
-		end
-		if p.held_item.target != "none" then
-			local x_dist = p.held_item.target.x - p.held_item.x 
-			local y_dist = p.held_item.target.y - p.held_item.y
-			p.held_item.dx = x_dist 
-			p.held_item.dy = y_dist
-			sfx(0)
-		else
-			sfx(1)
-			if p.face_right then
-				p.held_item.dx = rnd(2.5) + 0.5
-			else
-				p.held_item.dx = - rnd(2.5) - 0.5
-			end
-		end
-		p.held_item.dy = - rnd(1)
-		p.held_item.state = "throw"
-		_upd = u_walking_around
+		p.held_item.state = "floor"
+		_upd = u_throw_charging
+		_drw = d_throw_charging
 	end
+end
+
+function u_throw_charging()
+	p_move()
+	npcs_move()
+	sharks_move()
+	snowball_move()
+
+	if btn(🅾️) then
+		-- keep charging (update "charge" variable)
+		p.charging_power += p.charging_increment 
+	
+		-- confirm power within bounds, then release snowball
+		p.charging_power = max(p.charging_power, p.charge_min)
+		p.charging_power = min(p.charging_power, p.charge_max)
+	else
+		if p.face_right then
+			p.held_item.dx = p.charging_power
+		else
+			p.held_item.dx = -p.charging_power
+		end
+
+		p.held_item.dy = - rnd(1)
+		p.charging_power = 0
+
+		create_snowball(80, 50)
+		_upd = u_walking_around
+		_drw = d_walking_around
+	end
+
 end
 
 function u_dialogue()
