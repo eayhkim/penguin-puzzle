@@ -82,11 +82,13 @@ function start_convo(peng)
     if d.stage == "greeting" and d.next == "get_quest" then 
         d.stage = "quest"
         d.curr = rnd(npc_dialogues.quests)
+    
     elseif d.stage == "quest" and d.next != "end" then
         d.curr = d.next
         d.next = "end"
         quest_npc = peng
         return true
+        
     elseif d.next == "end" then
         peng.dialogue_state = nil
     end

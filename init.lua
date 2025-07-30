@@ -74,6 +74,7 @@ function _init()
 	closest = npcs[0]
 	talk_range = 6
 
+	active_quests = {}
 	quest_npc = nil
 
 	_upd = u_walking_around
@@ -111,7 +112,7 @@ function create_npc(id,sprite,name,x,y)
 			selected_idx = nil,
 			next = nil
 		},
-		quest_state = nil,
+		quest = {},
 		is_unlocked = false
 	}
 

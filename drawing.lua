@@ -55,10 +55,12 @@ function d_dialogue()
 
 	if closest.dialogue_state then
 		local d = closest.dialogue_state
-		-- only draw UI if still in dialogue, not quest trigger
+
+		draw_textbox(closest)
+		draw_big_penguin(closest)
+
+		-- only draw choices if quest not active
 		if d.stage != "quest" or type(d.curr) == "table" then
-			draw_textbox(closest)
-			draw_big_penguin(closest)
 			draw_choices(closest)
 		end
 	end
@@ -68,7 +70,7 @@ end
 
 
 function d_quest()
-	trigger_quest(quest_npc) 
+	-- create_quest(quest_npc) 
 end
 
 
