@@ -74,6 +74,8 @@ function _init()
 	closest = npcs[0]
 	talk_range = 6
 
+	quest_npc = nil
+
 	_upd = u_walking_around
 	_drw = d_walking_around
 	offset = 0

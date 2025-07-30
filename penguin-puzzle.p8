@@ -73,13 +73,13 @@ function start_convo(peng)
 
     -- in quest (curr == type str), so no need for convo
     if type(d.curr) != "table" or not d.curr.responses then
-        return
+        return false
     end
 
     -- waiting for user input
     if not d.next then
         get_response(peng)
-        return
+        return false
     end
 
     if d.stage == "greeting" and d.next == "get_quest" then 
@@ -88,7 +88,8 @@ function start_convo(peng)
     elseif d.stage == "quest" and d.next != "end" then
         d.curr = d.next
         d.next = "end"
-        trigger_quest(peng) 
+        quest_npc = peng
+        return true
     elseif d.next == "end" then
         peng.dialogue_state = nil
     end
@@ -96,6 +97,7 @@ function start_convo(peng)
     -- reset to avoid repeating on next advance
     d.selected_idx = nil
     d.next = nil
+    return false
 end
 
 
@@ -189,6 +191,11 @@ function d_dialogue()
 	end
 
 	print("🅾️ to exit", 85, 2 + ui_offset, 7)
+end
+
+
+function d_quest()
+	trigger_quest(quest_npc) 
 end
 
 
@@ -463,6 +470,8 @@ function _init()
 	statex = "walking"
 	closest = npcs[0]
 	talk_range = 6
+
+	quest_npc = nil
 
 	_upd = u_walking_around
 	_drw = d_walking_around
@@ -798,9 +807,21 @@ end
 
 function u_dialogue()
 	if closest.dialogue_state then 
-		start_convo(closest)
+		is_quest = start_convo(closest)
+		if is_quest then 
+			_upd = u_quest 
+			_drw = d_quest
+		end
 	end
 
+	if btnp(🅾️) then
+		_upd = u_walking_around
+		_drw = d_walking_around
+	end
+end
+
+
+function u_quest()
 	if btnp(🅾️) then
 		_upd = u_walking_around
 		_drw = d_walking_around

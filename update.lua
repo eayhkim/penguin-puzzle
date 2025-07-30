@@ -77,9 +77,21 @@ end
 
 function u_dialogue()
 	if closest.dialogue_state then 
-		start_convo(closest)
+		is_quest = start_convo(closest)
+		if is_quest then 
+			_upd = u_quest 
+			_drw = d_quest
+		end
 	end
 
+	if btnp(🅾️) then
+		_upd = u_walking_around
+		_drw = d_walking_around
+	end
+end
+
+
+function u_quest()
 	if btnp(🅾️) then
 		_upd = u_walking_around
 		_drw = d_walking_around

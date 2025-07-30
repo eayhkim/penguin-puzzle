@@ -67,6 +67,11 @@ function d_dialogue()
 end
 
 
+function d_quest()
+	trigger_quest(quest_npc) 
+end
+
+
 function d_end_game()
 	cls()
 	print("you tipped the iceberg!", 30, 30, 7)
