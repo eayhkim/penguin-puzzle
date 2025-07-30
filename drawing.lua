@@ -52,13 +52,16 @@ function d_dialogue()
 	draw_penguins()
  	draw_sharks()
 	draw_snowballs()
- 
- 	draw_textbox(closest)
-	draw_big_penguin(closest)
 
-	if closest.dialogue_state then 
-		draw_choices(closest)
-	end 
+	if closest.dialogue_state then
+		local d = closest.dialogue_state
+		-- only draw UI if still in dialogue, not quest trigger
+		if d.stage != "quest" or type(d.curr) == "table" then
+			draw_textbox(closest)
+			draw_big_penguin(closest)
+			draw_choices(closest)
+		end
+	end
 
 	print("🅾️ to exit", 85, 2 + ui_offset, 7)
 end
@@ -181,9 +184,12 @@ function draw_textbox(peng)
 
 	-- draw_center_txt_rect(peng.message, 66, 26, 114, 84, 1)
 
-	if peng.dialogue_state then 
-		draw_center_txt_rect(peng.dialogue_state.curr.text, 66, 26, 114, 84, 1)
-	else 
+	if peng.dialogue_state 
+		and peng.dialogue_state.curr 
+		and type(peng.dialogue_state.curr) == "table" 
+		and peng.dialogue_state.curr.text then
+			draw_center_txt_rect(peng.dialogue_state.curr.text, 66, 26, 114, 84, 1)
+	else
 		draw_center_txt_rect(peng.message, 66, 26, 114, 84, 1)
 	end
 end	
@@ -199,6 +205,12 @@ end
 
 
 function draw_choices(peng)
+	if not peng.dialogue_state 
+        or type(peng.dialogue_state.curr) != "table" 
+        or not peng.dialogue_state.curr.responses then
+        return
+    end
+
 	local responses = peng.dialogue_state.curr.responses
     local selected_index = peng.dialogue_state.selected_idx or 1
 

@@ -68,6 +68,12 @@ npc_dialogues = {
 function start_convo(peng)
     local d = peng.dialogue_state
 
+    -- in quest (curr == type str), so no need for convo
+    if type(d.curr) != "table" or not d.curr.responses then
+        return
+    end
+
+    -- waiting for user input
     if not d.next then
         get_response(peng)
         return
@@ -76,13 +82,12 @@ function start_convo(peng)
     if d.stage == "greeting" and d.next == "get_quest" then 
         d.stage = "quest"
         d.curr = rnd(npc_dialogues.quests)
-
+    elseif d.stage == "quest" and d.next != "end" then
+        d.curr = d.next
+        d.next = "end"
+        trigger_quest(peng) 
     elseif d.next == "end" then
         peng.dialogue_state = nil
-
-    else -- on quest stage
-        d.stage = "end"
-        -- trigger_quest(n, peng) 
     end
 
     -- reset to avoid repeating on next advance

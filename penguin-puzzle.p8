@@ -71,6 +71,12 @@ npc_dialogues = {
 function start_convo(peng)
     local d = peng.dialogue_state
 
+    -- in quest (curr == type str), so no need for convo
+    if type(d.curr) != "table" or not d.curr.responses then
+        return
+    end
+
+    -- waiting for user input
     if not d.next then
         get_response(peng)
         return
@@ -79,13 +85,12 @@ function start_convo(peng)
     if d.stage == "greeting" and d.next == "get_quest" then 
         d.stage = "quest"
         d.curr = rnd(npc_dialogues.quests)
-
+    elseif d.stage == "quest" and d.next != "end" then
+        d.curr = d.next
+        d.next = "end"
+        trigger_quest(peng) 
     elseif d.next == "end" then
         peng.dialogue_state = nil
-
-    else -- on quest stage
-        d.stage = "end"
-        -- trigger_quest(n, peng) 
     end
 
     -- reset to avoid repeating on next advance
@@ -172,13 +177,16 @@ function d_dialogue()
 	draw_penguins()
  	draw_sharks()
 	draw_snowballs()
- 
- 	draw_textbox(closest)
-	draw_big_penguin(closest)
 
-	if closest.dialogue_state then 
-		draw_choices(closest)
-	end 
+	if closest.dialogue_state then
+		local d = closest.dialogue_state
+		-- only draw UI if still in dialogue, not quest trigger
+		if d.stage != "quest" or type(d.curr) == "table" then
+			draw_textbox(closest)
+			draw_big_penguin(closest)
+			draw_choices(closest)
+		end
+	end
 
 	print("🅾️ to exit", 85, 2 + ui_offset, 7)
 end
@@ -301,9 +309,12 @@ function draw_textbox(peng)
 
 	-- draw_center_txt_rect(peng.message, 66, 26, 114, 84, 1)
 
-	if peng.dialogue_state then 
-		draw_center_txt_rect(peng.dialogue_state.curr.text, 66, 26, 114, 84, 1)
-	else 
+	if peng.dialogue_state 
+		and peng.dialogue_state.curr 
+		and type(peng.dialogue_state.curr) == "table" 
+		and peng.dialogue_state.curr.text then
+			draw_center_txt_rect(peng.dialogue_state.curr.text, 66, 26, 114, 84, 1)
+	else
 		draw_center_txt_rect(peng.message, 66, 26, 114, 84, 1)
 	end
 end	
@@ -319,6 +330,12 @@ end
 
 
 function draw_choices(peng)
+	if not peng.dialogue_state 
+        or type(peng.dialogue_state.curr) != "table" 
+        or not peng.dialogue_state.curr.responses then
+        return
+    end
+
 	local responses = peng.dialogue_state.curr.responses
     local selected_index = peng.dialogue_state.selected_idx or 1
 
@@ -679,6 +696,26 @@ function snowball_move()
 			end
 		end
 	end
+end
+
+
+-->8
+-- >>> quest.lua <<<
+-- quests --
+function trigger_quest(peng) 
+    local quest = peng.dialogue_state.curr
+
+    if quest == "find_fish" then
+        draw_big_penguin(peng)
+    elseif quest == "tip_iceberg" then
+        draw_big_penguin(peng)
+    elseif quest == "defeat_sharks" then
+        draw_big_penguin(peng)
+    elseif quest == "throw_snowballs" then
+        draw_big_penguin(peng)
+    elseif quest == "find_penguin" then
+        draw_big_penguin(peng)
+    end
 end
 
 
